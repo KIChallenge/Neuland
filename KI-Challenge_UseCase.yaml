@@ -5,4 +5,4 @@
 #   uc2 = HealthPolicy Simulator (Multi-Agenten-Simulator für politische, organisatorische und finanzielle Entscheidungen im Gesundheitswesen)
 #   uc3 = StatAgent              (agentengestützter Statistikprozess)
 use_case:
-  - uc1
+  - uc2
