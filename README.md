@@ -106,4 +106,4 @@ Damit keine geheimen API-Schlüssel im Quellcode oder auf GitHub gespeichert wer
    - Die Effekte der Maßnahmen werden aus Presseartikeln und den Grundzahlen der Statistik-Austria-Reports abgeleitet. Elastizitäten, Flächenhebel-Faktor und Maximaleffekte pro Hebel sind feste Modellannahmen in `grundfakten.yaml`, keine empirisch geschätzten Werte.
    - **Weiterentwicklung:** Ein echtes, kalibriertes Rechenmodell auf Basis von Versorgungs-, Kapazitäts- und Wartezeitdaten würde die Aussagekraft deutlich erhöhen.
 
-> **Fazit:** Die Qualität der Simulation steht und fällt mit der Datengrundlage – KI-Systeme brauchen reliable Daten.
+> **Fazit:** Die Qualität der Simulation steht und fällt mit der Datengrundlage – KI-Systeme brauchen reliable Daten!
