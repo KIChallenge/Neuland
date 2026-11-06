@@ -1,0 +1,22 @@
+# Secrets & Environment
+.env
+
+# Python Bytecode & Virtual Environments
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+
+# Raw Press Mirror PDFs & Uncompressed SQLite DB (>100 MB GitHub limit)
+# Note: presse_db.sqlite.gz (<35 MB) IS tracked in Git and automatically unpacked on first start!
+presse_data/
+presse_db.sqlite
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
+
+# macOS / OS files
+.DS_Store
+~$*

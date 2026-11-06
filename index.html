@@ -1,0 +1,2212 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HealthPolicy Simulator Österreich</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg-page: #F5F5F7;
+      --bg-card: #FFFFFF;
+      --bg-subtle: #F9F9FB;
+      --border: #E5E5EA;
+      --border-strong: #D2D2D7;
+      --text-main: #1D1D1F;
+      --text-secondary: #424245;
+      --text-muted: #6E6E73;
+      --accent: #0071E3;
+      --accent-hover: #0077ED;
+      --accent-soft: rgba(0, 113, 227, 0.08);
+      --green: #1D8348;
+      --green-bg: #EAF7EE;
+      --amber: #B45309;
+      --amber-bg: #FEF3C7;
+      --red: #C0392B;
+      --red-bg: #FDEDEC;
+      --purple: #6D28D9;
+      --purple-bg: #F3E8FF;
+      --radius-lg: 16px;
+      --radius-md: 12px;
+      --radius-sm: 8px;
+      --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.04);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Inter", "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg-page);
+      color: var(--text-main);
+      line-height: 1.55;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Minimalist Apple-Clean Header */
+    header {
+      background: rgba(255, 255, 255, 0.88);
+      backdrop-filter: saturate(180%) blur(20px);
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
+      border-bottom: 1px solid var(--border);
+      padding: 0.9rem 2.2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 200;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+    }
+
+    .brand-logo {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      background: var(--text-main);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.15rem;
+      font-weight: 600;
+    }
+
+    .brand h1 {
+      font-size: 1.14rem;
+      font-weight: 700;
+      color: var(--text-main);
+      letter-spacing: -0.02em;
+    }
+
+    .brand p {
+      font-size: 0.76rem;
+      color: var(--text-muted);
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 0.6rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .pill-btn {
+      background: var(--bg-card);
+      border: 1px solid var(--border-strong);
+      color: var(--text-secondary);
+      padding: 0.45rem 0.95rem;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .pill-btn:hover {
+      border-color: var(--text-main);
+      color: var(--text-main);
+      background: var(--bg-subtle);
+    }
+
+    .btn-back-setup {
+      background: var(--text-main);
+      border: 1px solid var(--text-main);
+      color: #fff;
+      padding: 0.45rem 0.95rem;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: none;
+      align-items: center;
+      gap: 0.4rem;
+      transition: opacity 0.15s;
+    }
+
+    .btn-back-setup:hover {
+      opacity: 0.88;
+    }
+
+    /* Container */
+    .screen-container {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 1.75rem 2.2rem 3.5rem;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem 1.65rem;
+      margin-bottom: 1.35rem;
+      box-shadow: var(--shadow-card);
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.85rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .section-title {
+      font-size: 1.08rem;
+      font-weight: 700;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      letter-spacing: -0.015em;
+    }
+
+    .step-badge {
+      background: var(--bg-page);
+      border: 1px solid var(--border-strong);
+      color: var(--text-secondary);
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 0.18rem 0.55rem;
+      border-radius: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    /* Prompt Input & Chips */
+    textarea.hero-input {
+      width: 100%;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-strong);
+      color: var(--text-main);
+      border-radius: var(--radius-md);
+      padding: 0.95rem 1.1rem;
+      font-size: 0.96rem;
+      font-family: inherit;
+      line-height: 1.5;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      resize: vertical;
+    }
+
+    textarea.hero-input:focus {
+      outline: none;
+      background: #fff;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.15);
+    }
+
+    .example-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 0.8rem;
+    }
+
+    .example-chip {
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      font-size: 0.78rem;
+      font-weight: 500;
+      padding: 0.38rem 0.8rem;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .example-chip:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-soft);
+    }
+
+    /* Parameter Bar (3 Columns) */
+    .params-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.1rem;
+    }
+
+    .param-box {
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 1rem 1.15rem;
+    }
+
+    .param-box label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.84rem;
+      font-weight: 600;
+      color: var(--text-main);
+      margin-bottom: 0.55rem;
+    }
+
+    .param-val-pill {
+      background: var(--accent-soft);
+      color: var(--accent);
+      padding: 0.18rem 0.6rem;
+      border-radius: 999px;
+      font-size: 0.76rem;
+      font-weight: 700;
+    }
+
+    select, input[type="text"], input[type="number"] {
+      width: 100%;
+      background: #fff;
+      border: 1px solid var(--border-strong);
+      color: var(--text-main);
+      border-radius: var(--radius-sm);
+      padding: 0.55rem 0.8rem;
+      font-size: 0.86rem;
+      font-family: inherit;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    /* Stakeholder Grid in Screen 1 */
+    .roles-studio-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 0.95rem;
+    }
+
+    .studio-role-card {
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 1rem 1.1rem;
+      transition: all 0.15s ease;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      opacity: 0.68;
+    }
+
+    .studio-role-card.active {
+      background: #fff;
+      border-color: var(--accent);
+      box-shadow: 0 2px 8px rgba(0, 113, 227, 0.08);
+      opacity: 1;
+    }
+
+    .role-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 0.5rem;
+      margin-bottom: 0.45rem;
+    }
+
+    .role-check-label {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-weight: 700;
+      font-size: 0.92rem;
+      color: var(--text-main);
+      cursor: pointer;
+    }
+
+    .role-check-label input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    .persona-badge {
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 0.16rem 0.52rem;
+      border-radius: 999px;
+      white-space: nowrap;
+    }
+
+    /* Clean Primary Launch Button */
+    .btn-launch {
+      width: 100%;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-md);
+      padding: 1rem 1.6rem;
+      font-size: 1.02rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.55rem;
+    }
+
+    .btn-launch:hover:not(:disabled) {
+      background: var(--accent-hover);
+    }
+
+    .btn-launch:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* Multi-Goal Guard Alert Box */
+    .multi-goal-alert {
+      background: var(--amber-bg);
+      border: 1px solid #F59E0B;
+      border-radius: var(--radius-md);
+      padding: 1.25rem;
+      margin-bottom: 1.35rem;
+      display: none;
+    }
+
+    /* Solid Blue Progress Bar */
+    .progress-bar-track {
+      width: 100%;
+      height: 8px;
+      background: var(--bg-page);
+      border-radius: 999px;
+      overflow: hidden;
+      margin: 0.65rem 0 0.25rem;
+      border: 1px solid var(--border);
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: var(--accent);
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+
+    /* SCREEN 2: EXECUTIVE RESULTS DASHBOARD */
+    .kpi-banner {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(225px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.35rem;
+    }
+
+    .kpi-tile {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 1.1rem 1.3rem;
+      box-shadow: var(--shadow-card);
+    }
+
+    .kpi-tile .label {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .kpi-tile .val {
+      font-size: 1.55rem;
+      font-weight: 700;
+      margin: 0.22rem 0;
+      letter-spacing: -0.02em;
+      color: var(--text-main);
+    }
+
+    .kpi-tile .sub {
+      font-size: 0.77rem;
+      color: var(--text-muted);
+    }
+
+    /* 3 Main Dashboard Navigation Tabs */
+    .main-tabs {
+      display: flex;
+      gap: 0.45rem;
+      background: #E8E8ED;
+      padding: 0.38rem;
+      border-radius: var(--radius-md);
+      margin-bottom: 1.35rem;
+      flex-wrap: wrap;
+    }
+
+    .main-tab-btn {
+      flex: 1;
+      min-width: 200px;
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+      padding: 0.65rem 1.1rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.45rem;
+    }
+
+    .main-tab-btn:hover {
+      color: var(--text-main);
+    }
+
+    .main-tab-btn.active {
+      background: var(--bg-card);
+      color: var(--text-main);
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+    }
+
+    .tab-pane {
+      display: none;
+    }
+
+    .tab-pane.active {
+      display: block;
+    }
+
+    /* Round Switcher Bar in Tab 1 */
+    .round-switcher-bar {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 0.95rem 1.35rem;
+      margin-bottom: 1.25rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+      box-shadow: var(--shadow-card);
+    }
+
+    /* Charts 2x2 Grid */
+    .charts-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.15rem;
+      margin-bottom: 1.35rem;
+    }
+
+    @media (max-width: 1100px) {
+      .charts-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .chart-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.2rem 1.35rem;
+      height: 340px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: var(--shadow-card);
+    }
+
+    .chart-wrap {
+      flex: 1;
+      position: relative;
+      min-height: 0;
+    }
+
+    /* Vertically Stacked Full-Width Cards in Tab 1 */
+    .stacked-full-cards {
+      display: flex;
+      flex-direction: column;
+      gap: 1.35rem;
+    }
+
+    /* Short Newspaper Badges (`📰 Die Presse (18.08.2026)`) */
+    .news-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      background: var(--accent-soft);
+      border: 1px solid rgba(0, 113, 227, 0.25);
+      color: var(--accent);
+      padding: 0.16rem 0.58rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin: 0.1rem 0.15rem;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+
+    .news-badge:hover {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    /* ====================================================================== */
+    /* TAB 2: SPACIOUS AGENT CARDS WITH 1-LINE KPIS, LINE-BY-LINE PROPOSALS   */
+    /* ====================================================================== */
+    .compact-agents-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1.8rem;
+    }
+
+    .compact-agent-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.9rem 2.2rem;
+      box-shadow: var(--shadow-card);
+    }
+
+    .agent-card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1.2rem;
+      flex-wrap: wrap;
+      margin-bottom: 1.35rem;
+      padding-bottom: 0.9rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .agent-role-heading {
+      font-size: 1.32rem;
+      font-weight: 700;
+      color: var(--text-main);
+      letter-spacing: -0.015em;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .score-pill-large {
+      padding: 0.5rem 1.2rem;
+      border-radius: 999px;
+      font-weight: 800;
+      font-size: 1.14rem;
+      letter-spacing: -0.01em;
+    }
+
+    /* Single-Line KPI Summary Row (No Bubbles) */
+    .agent-kpi-line {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 2.2rem;
+      margin-bottom: 1.35rem;
+      padding: 0.75rem 1.1rem;
+      background: var(--bg-subtle);
+      border-radius: var(--radius-sm);
+      border-left: 3px solid var(--border-strong);
+      font-size: 0.95rem;
+    }
+
+    .agent-kpi-item {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 0.45rem;
+    }
+
+    .agent-kpi-item .kpi-lbl {
+      color: var(--text-muted);
+      font-weight: 500;
+      font-size: 0.86rem;
+    }
+
+    .agent-kpi-item .kpi-val {
+      font-weight: 700;
+      font-size: 1.02rem;
+      color: var(--text-main);
+    }
+
+    /* Line-by-Line Proposals Section (No Bubbles) */
+    .agent-proposals-block {
+      margin-bottom: 1.55rem;
+      padding-left: 0.5rem;
+    }
+
+    .agent-section-label {
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      font-weight: 700;
+      margin-bottom: 0.55rem;
+    }
+
+    .agent-proposal-line {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 1rem;
+      padding: 0.52rem 0.75rem;
+      border-bottom: 1px dashed var(--border);
+      font-size: 0.92rem;
+    }
+
+    .agent-proposal-line:last-child {
+      border-bottom: none;
+    }
+
+    .agent-proposal-title {
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .agent-proposal-metrics {
+      white-space: nowrap;
+      font-size: 0.88rem;
+      color: var(--text-secondary);
+      font-weight: 600;
+    }
+
+    /* Indented Bullet Points with Clear Typography Hierarchy */
+    .agent-bullets-section {
+      padding-left: 0.5rem;
+      margin-bottom: 1.6rem;
+    }
+
+    .agent-bullets-list {
+      list-style-type: disc;
+      padding-left: 1.4rem;
+      font-size: 0.96rem;
+      line-height: 1.7;
+      color: var(--text-main);
+    }
+
+    .agent-bullets-list li {
+      margin-bottom: 0.5rem;
+    }
+
+    /* 4 Separate Dropdowns Grid / Stack */
+    .agent-dropdowns-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 0.85rem;
+      margin-top: 0.8rem;
+      padding-top: 1.2rem;
+      border-top: 1px solid var(--border);
+    }
+
+    details.drilldown {
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 0.65rem 0.95rem;
+      align-self: start;
+    }
+
+    details.drilldown[open] {
+      grid-column: 1 / -1;
+      background: #fff;
+      border-color: var(--border-strong);
+    }
+
+    details.drilldown summary {
+      cursor: pointer;
+      font-size: 0.84rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      user-select: none;
+    }
+
+    details.drilldown summary:hover {
+      color: var(--accent);
+    }
+
+    .dropdown-inner {
+      margin-top: 0.75rem;
+      padding-left: 0.75rem;
+      border-left: 2px solid var(--border-strong);
+      font-size: 0.87rem;
+      line-height: 1.6;
+      color: var(--text-secondary);
+    }
+
+    /* Clean Tables */
+    .clean-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.86rem;
+      margin-top: 0.55rem;
+    }
+
+    .clean-table th, .clean-table td {
+      padding: 0.75rem 0.85rem;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .clean-table th {
+      color: var(--text-muted);
+      font-size: 0.74rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      background: var(--bg-subtle);
+    }
+
+    .clean-table tfoot td {
+      background: var(--bg-subtle);
+      border-top: 2px solid var(--border-strong);
+      border-bottom: none;
+      font-weight: 700;
+      padding: 0.85rem;
+      font-size: 0.9rem;
+    }
+
+    /* Sub-Tabs / Pills for Negotiation Phases */
+    .phase-pills {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .phase-pill {
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-strong);
+      color: var(--text-secondary);
+      padding: 0.48rem 1rem;
+      border-radius: 999px;
+      font-size: 0.83rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .phase-pill:hover {
+      border-color: var(--text-main);
+      color: var(--text-main);
+    }
+
+    .phase-pill.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    /* Large Adaptive Modal for Presse-DB & Grundfakten */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.45);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+      padding: 1.5rem;
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+    }
+
+    .modal-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-lg);
+      max-width: 1180px;
+      width: 94vw;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.22);
+    }
+
+    .modal-head {
+      padding: 1.05rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      background: var(--bg-subtle);
+    }
+
+    .modal-body {
+      padding: 1.5rem;
+      overflow-y: auto;
+      font-size: 0.92rem;
+      line-height: 1.65;
+      color: var(--text-main);
+    }
+
+    mark.sentence-highlight {
+      background-color: #FEF08A;
+      color: #1D1D1F;
+      padding: 0.08rem 0.22rem;
+      border-radius: 4px;
+      box-shadow: 0 0 0 1px #FACC15;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- TOP NAVIGATION BAR -->
+  <header>
+    <div class="brand">
+      <img src="/logo.png" alt="Logo" style="height:40px; width:auto; border-radius:8px; object-fit:contain;" />
+      <div>
+        <h1>HealthPolicy Simulator Österreich</h1>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="btn-back-setup" id="backToSetupBtn" onclick="switchToSetupScreen()">
+        ← Neue Simulation / Parameter
+      </button>
+      <span class="pill-btn" id="dbStatsPill" onclick="openDbSearchModal()">📰 Presse-DB</span>
+      <span class="pill-btn" onclick="openGrundfaktenModal()">📊 Grundfakten (57.837 Mio. €)</span>
+    </div>
+  </header>
+
+  <div class="screen-container">
+
+    <!-- ================================================================== -->
+    <!-- SCREEN 1: SETUP STUDIO                                             -->
+    <!-- ================================================================== -->
+    <div id="setupScreen">
+
+      <div class="multi-goal-alert" id="multiGoalAlertBox"></div>
+
+      <!-- Step 1: Policy Question or Proposal -->
+      <div class="card">
+        <div class="section-header">
+          <div class="section-title">
+            <span class="step-badge">Schritt 1</span>
+            <span>Reform-Fragestellung oder eigenes Proposal eingeben</span>
+          </div>
+        </div>
+        <textarea id="userInput" class="hero-input" rows="3">Wie können die Wartezeiten auf Facharzttermine innerhalb von fünf Jahren um 20 % reduziert werden, ohne die Gesundheitsausgaben um mehr als 5% zu erhöhen?</textarea>
+        <div class="example-chips" id="exampleChips"></div>
+      </div>
+
+      <!-- Step 2: Simulation & Democracy Parameters (3 clean columns, tokens hardcoded to 2) -->
+      <div class="card">
+        <div class="section-header">
+          <div class="section-title">
+            <span class="step-badge">Schritt 2</span>
+            <span>Abstimmungsregel & Simulations-Parameter</span>
+          </div>
+        </div>
+        <div class="params-grid">
+          <div class="param-box">
+            <label for="votingSystemSelect">
+              <span>🗳️ Abstimmungsregel</span>
+            </label>
+            <select id="votingSystemSelect" onchange="updateVotingDesc()"></select>
+            <p id="votingSystemDesc" style="font-size:0.75rem; color:var(--text-muted); margin-top:0.45rem;"></p>
+          </div>
+
+          <div class="param-box">
+            <label>
+              <span>📰 Artikel pro Agent</span>
+              <span class="param-val-pill" id="artCountLabel">7 Artikel</span>
+            </label>
+            <input type="range" id="articlesPerAgentSlider" min="3" max="20" step="1" value="7"
+              oninput="document.getElementById('artCountLabel').textContent = this.value + ' Artikel'" />
+            <p style="font-size:0.75rem; color:var(--text-muted); margin-top:0.45rem;">
+              Anzahl der Zeitungsartikel pro Agent.
+            </p>
+          </div>
+
+          <div class="param-box">
+            <label>
+              <span>🔄 Max. Verhandlungsrunden</span>
+              <span class="param-val-pill" id="maxRoundsLabel">3 Runden</span>
+            </label>
+            <input type="range" id="maxRoundsSlider" min="1" max="5" step="1" value="3"
+              oninput="document.getElementById('maxRoundsLabel').textContent = this.value + (this.value==='1' ? ' Runde' : ' Runden')" />
+            <p style="font-size:0.75rem; color:var(--text-muted); margin-top:0.45rem;">
+              Stoppt automatisch früher, sobald Konsens erreicht wird.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3: Participating Stakeholders & Compromise Sliders -->
+      <div class="card">
+        <div class="section-header">
+          <div class="section-title">
+            <span class="step-badge">Schritt 3</span>
+            <span>Verhandlungspartner & Kompromissbereitschaft</span>
+          </div>
+          <span class="param-val-pill" id="activeRolesCountPill">6 Institutionen aktiv</span>
+        </div>
+        <div class="roles-studio-grid" id="rolesStudioGrid"></div>
+      </div>
+
+      <!-- Launch Button -->
+      <button class="btn-launch" id="launchSimBtn" onclick="startSimulation()">
+        <span>Simulation starten</span>
+      </button>
+
+      <!-- Minimalist Progress Card (Only step message + progress bar, no verbose log box!) -->
+      <div class="card" id="liveProgressCard" style="display:none; margin-top:1.25rem;">
+        <div class="section-header" style="margin-bottom:0.2rem;">
+          <div class="section-title" id="liveProgressTitle" style="font-size:0.96rem;">Schritt 1: Vorhaben wird analysiert...</div>
+          <span class="param-val-pill" id="liveProgressPct">0%</span>
+        </div>
+        <div class="progress-bar-track">
+          <div class="progress-bar-fill" id="liveProgressBar"></div>
+        </div>
+      </div>
+
+    </div><!-- /setupScreen -->
+
+
+    <!-- ================================================================== -->
+    <!-- SCREEN 2: RESULTS DASHBOARD                                        -->
+    <!-- ================================================================== -->
+    <div id="resultsScreen" style="display:none;">
+
+      <!-- 1. Top KPI Tiles -->
+      <div class="kpi-banner" id="kpiBanner"></div>
+
+      <!-- 2. 3 Clean Main Tabs -->
+      <div class="main-tabs">
+        <button class="main-tab-btn active" onclick="switchMainTab('tabExec', this)">
+          1. Übersicht & Grafiken
+        </button>
+        <button class="main-tab-btn" onclick="switchMainTab('tabRounds', this)">
+          2. Rundenverlauf & Positionen
+        </button>
+        <button class="main-tab-btn" onclick="switchMainTab('tabStrategy', this)">
+          3. Handlungsempfehlung
+        </button>
+      </div>
+
+      <!-- TAB 1: OVERVIEW, ROUND SWITCHER, 4 CHARTS & FULL-WIDTH STACKED TABLES -->
+      <div class="tab-pane active" id="tabExec">
+
+        <!-- Explicit Round Indicator & Switcher -->
+        <div class="round-switcher-bar">
+          <div>
+            <div style="font-size:0.73rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-muted); font-weight:600;">
+              Dargestellter Verhandlungsstand
+            </div>
+            <div id="execActiveRoundTitle" style="font-size:1.05rem; font-weight:700; color:var(--text-main); margin-top:0.1rem;">
+              Endstand
+            </div>
+          </div>
+          <div class="phase-pills" id="execRoundPills"></div>
+        </div>
+
+        <!-- 2 Visual Plots -->
+        <div class="charts-grid">
+          <div class="chart-card">
+            <div class="section-title" style="font-size:0.92rem; margin-bottom:0.55rem;">
+              Zustimmungs-Verlauf je Rolle vs. Konsens-Schwelle (%)
+            </div>
+            <div class="chart-wrap"><canvas id="chartVoting"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <div class="section-title" style="font-size:0.92rem; margin-bottom:0.55rem;" id="chartBubbleTitle">
+              Kosten-Wirkungs-Verhältnis (Mio. € vs. Effekt %)
+            </div>
+            <div class="chart-wrap"><canvas id="chartBubble"></canvas></div>
+          </div>
+        </div>
+
+        <!-- Vertically Stacked Full-Width Summary Cards -->
+        <div class="stacked-full-cards">
+          <div class="card" id="execCompromiseCard" style="margin-bottom:0;"></div>
+          <div class="card" id="execScorecardCard" style="margin-bottom:0;"></div>
+        </div>
+      </div>
+
+      <!-- TAB 2: NEGOTIATION ROUNDS & SPACIOUS AGENT PROFILES -->
+      <div class="tab-pane" id="tabRounds">
+        <div class="card">
+          <div class="section-header" style="margin-bottom:1.25rem;">
+            <div class="section-title">Verhandlungsrunde auswählen</div>
+            <div class="phase-pills" id="phasePillsBar"></div>
+          </div>
+          <div id="phaseDetailContainer"></div>
+        </div>
+      </div>
+
+      <!-- TAB 3: STRATEGIC ACTION RECOMMENDATION -->
+      <div class="tab-pane" id="tabStrategy">
+        <div class="card" style="padding:1.75rem 2rem;">
+          <div class="section-header" style="margin-bottom:0.65rem;">
+            <div class="section-title">Strategische Handlungsempfehlung nach Rolle</div>
+          </div>
+          <div style="display:flex; gap:0.85rem; align-items:center; flex-wrap:wrap; margin-bottom:1.5rem;">
+            <select id="recRoleSelect" style="max-width:360px;"></select>
+            <button class="btn-launch" id="genRecBtn" style="width:auto; padding:0.6rem 1.35rem; font-size:0.9rem;" onclick="generateRecommendation()">
+              Briefing erstellen
+            </button>
+          </div>
+          <div id="recommendationOutput"></div>
+        </div>
+      </div>
+
+    </div><!-- /resultsScreen -->
+
+  </div><!-- /screen-container -->
+
+  <!-- MODAL FOR ARTICLE FULLTEXT, PRESSE-DB & GRUNDFAKTEN -->
+  <div class="modal-backdrop" id="articleModal" onclick="if(event.target===this) closeModal()">
+    <div class="modal-box">
+      <div class="modal-head">
+        <h3 id="modalTitle" style="font-size:1.05rem; font-weight:700;">Details</h3>
+        <button class="pill-btn" onclick="closeModal()">✕ Schließen</button>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+    </div>
+  </div>
+
+  <script>
+    let CONFIG = null;
+    let CURRENT_JOB_ID = null;
+    let CURRENT_RESULT = null;
+    let SELECTED_EXEC_ROUND_IDX = 0;
+    let POLL_TIMER = null;
+    let CHARTS = {};
+
+    async function initApp() {
+      const res = await fetch('/api/config');
+      CONFIG = await res.json();
+
+      const st = CONFIG.db_stats || {};
+      document.getElementById('dbStatsPill').textContent =
+        `📰 Presse-DB (${(st.total_articles || 0).toLocaleString('de-AT')} Artikel)`;
+
+      const chipsEl = document.getElementById('exampleChips');
+      chipsEl.innerHTML = '';
+      (CONFIG.example_prompts || []).forEach(ex => {
+        const chip = document.createElement('span');
+        chip.className = 'example-chip';
+        chip.textContent = ex.label;
+        chip.onclick = () => {
+          document.getElementById('userInput').value = ex.text;
+          document.getElementById('multiGoalAlertBox').style.display = 'none';
+        };
+        chipsEl.appendChild(chip);
+      });
+
+      const vsSel = document.getElementById('votingSystemSelect');
+      vsSel.innerHTML = '';
+      Object.entries(CONFIG.voting_systems || {}).forEach(([id, info]) => {
+        const opt = document.createElement('option');
+        opt.value = id;
+        opt.textContent = info.name;
+        vsSel.appendChild(opt);
+      });
+      updateVotingDesc();
+      renderStudioRoles();
+    }
+
+    function updateVotingDesc() {
+      const sel = document.getElementById('votingSystemSelect').value;
+      const info = (CONFIG.voting_systems || {})[sel];
+      document.getElementById('votingSystemDesc').textContent = info ? info.description : '';
+    }
+
+    function personaTagInfo(val) {
+      const v = parseInt(val, 10);
+      if (v <= 25) return { text: `${v}% Hardliner`, bg: '#FDEDEC', col: '#C0392B' };
+      if (v <= 60) return { text: `${v}% Pragmatisch`, bg: 'rgba(0,113,227,0.1)', col: '#0071E3' };
+      return { text: `${v}% Kooperativ`, bg: '#EAF7EE', col: '#1D8348' };
+    }
+
+    function renderStudioRoles() {
+      const grid = document.getElementById('rolesStudioGrid');
+      grid.innerHTML = '';
+      (CONFIG.roles || []).forEach(r => {
+        const card = document.createElement('div');
+        card.className = `studio-role-card ${r.default_selected ? 'active' : ''}`;
+        card.id = `studio-role-${r.role_id}`;
+        const p = personaTagInfo(r.default_compromise);
+
+        card.innerHTML = `
+          <div>
+            <div class="role-top">
+              <label class="role-check-label">
+                <input type="checkbox" class="role-checkbox" value="${r.role_id}" ${r.default_selected ? 'checked' : ''}
+                  onchange="onRoleCheck('${r.role_id}', this.checked)" />
+                <span>${r.icon} ${r.short_name}</span>
+              </label>
+              <span class="persona-badge" id="pbadge-${r.role_id}" style="background:${p.bg}; color:${p.col};">${p.text}</span>
+            </div>
+            <p style="font-size:0.78rem; color:var(--text-muted); margin-bottom:0.65rem;">${r.description}</p>
+          </div>
+          <div style="border-top:1px solid var(--border); padding-top:0.5rem;">
+            <div style="display:flex; justify-content:space-between; font-size:0.72rem; color:var(--text-muted); margin-bottom:0.2rem;">
+              <span>Kompromissbereitschaft</span>
+              <span>0% ↔ 100%</span>
+            </div>
+            <input type="range" min="0" max="100" step="5" value="${r.default_compromise}" id="slider-${r.role_id}"
+              oninput="onRoleSlider('${r.role_id}', this.value)" />
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+      updateActiveRolesCount();
+    }
+
+    function onRoleCheck(roleId, checked) {
+      const el = document.getElementById(`studio-role-${roleId}`);
+      if (el) el.classList.toggle('active', checked);
+      updateActiveRolesCount();
+    }
+
+    function onRoleSlider(roleId, val) {
+      const p = personaTagInfo(val);
+      const b = document.getElementById(`pbadge-${roleId}`);
+      if (b) {
+        b.textContent = p.text;
+        b.style.background = p.bg;
+        b.style.color = p.col;
+      }
+    }
+
+    function updateActiveRolesCount() {
+      const count = document.querySelectorAll('.role-checkbox:checked').length;
+      document.getElementById('activeRolesCountPill').textContent = `${count} Institutionen aktiv`;
+    }
+
+    function switchToSetupScreen() {
+      document.getElementById('resultsScreen').style.display = 'none';
+      document.getElementById('backToSetupBtn').style.display = 'none';
+      document.getElementById('setupScreen').style.display = 'block';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function switchMainTab(paneId, btnEl) {
+      document.querySelectorAll('.main-tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+      btnEl.classList.add('active');
+      document.getElementById(paneId).classList.add('active');
+    }
+
+    async function startSimulation() {
+      const checked = Array.from(document.querySelectorAll('.role-checkbox:checked'));
+      if (checked.length < 2) {
+        alert('Bitte wähle mindestens 2 Verhandlungspartner aus.');
+        return;
+      }
+      const selectedRoleIds = checked.map(c => c.value);
+      const compromiseSliders = {};
+      selectedRoleIds.forEach(rid => {
+        compromiseSliders[rid] = parseInt(document.getElementById(`slider-${rid}`).value, 10);
+      });
+
+      const payload = {
+        user_input: document.getElementById('userInput').value.trim(),
+        selected_role_ids: selectedRoleIds,
+        compromise_sliders: compromiseSliders,
+        voting_system_id: document.getElementById('votingSystemSelect').value,
+        articles_per_agent: parseInt(document.getElementById('articlesPerAgentSlider').value, 10),
+        tokens_per_round: 2,
+        max_rounds: parseInt(document.getElementById('maxRoundsSlider').value, 10),
+      };
+
+      document.getElementById('multiGoalAlertBox').style.display = 'none';
+      document.getElementById('launchSimBtn').disabled = true;
+      document.getElementById('liveProgressCard').style.display = 'block';
+      document.getElementById('liveProgressBar').style.width = '5%';
+      document.getElementById('liveProgressPct').textContent = '5%';
+      document.getElementById('liveProgressTitle').textContent = 'Schritt 1: Vorhaben wird analysiert...';
+
+      const res = await fetch('/api/simulate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      CURRENT_JOB_ID = data.job_id;
+
+      if (POLL_TIMER) clearInterval(POLL_TIMER);
+      POLL_TIMER = setInterval(pollJobStatus, 1000);
+    }
+
+    async function pollJobStatus() {
+      if (!CURRENT_JOB_ID) return;
+      try {
+        const res = await fetch(`/api/job?id=${CURRENT_JOB_ID}`);
+        if (!res.ok) {
+          clearInterval(POLL_TIMER);
+          document.getElementById('launchSimBtn').disabled = false;
+          document.getElementById('liveProgressTitle').textContent = 'Verbindung zum Job unterbrochen – bitte erneut starten.';
+          return;
+        }
+        const job = await res.json();
+
+        const pct = Math.round((job.progress || 0) * 100);
+        document.getElementById('liveProgressBar').style.width = `${pct}%`;
+        document.getElementById('liveProgressPct').textContent = `${pct}%`;
+        document.getElementById('liveProgressTitle').textContent = job.message || 'Simulation läuft...';
+
+        if (job.status === 'completed' && job.result) {
+          clearInterval(POLL_TIMER);
+          document.getElementById('launchSimBtn').disabled = false;
+          document.getElementById('liveProgressCard').style.display = 'none';
+
+          if (job.result.multi_goal_rejected) {
+            renderMultiGoalRejection(job.result.intent_info);
+            return;
+          }
+          CURRENT_RESULT = job.result;
+          renderExecutiveDashboard(job.result);
+        } else if (job.status === 'error') {
+          clearInterval(POLL_TIMER);
+          document.getElementById('launchSimBtn').disabled = false;
+          document.getElementById('liveProgressTitle').textContent = `Fehler: ${job.error}`;
+        }
+      } catch (err) {
+        // Ignore transient fetch hiccup
+      }
+    }
+
+    function renderMultiGoalRejection(intent) {
+      const box = document.getElementById('multiGoalAlertBox');
+      const goalsList = (intent.detected_goals || []).map(g => `<li><strong>${g}</strong></li>`).join('');
+      const suggestions = (intent.single_goal_suggestions || []).map(s =>
+        `<button class="pill-btn" style="margin-top:0.45rem; border-color:var(--accent); color:var(--accent);"
+          onclick="applySuggestedPrompt(${JSON.stringify(s).replace(/"/g, '&quot;')})">
+          Übernehmen: „${s}“
+        </button>`
+      ).join('<br/>');
+
+      box.innerHTML = `
+        <h3 style="color:var(--amber); font-size:0.98rem; margin-bottom:0.35rem;">
+          Mehrere gleichzeitige Zielgrößen erkannt – bitte auf 1 Hauptziel fokussieren
+        </h3>
+        <p style="font-size:0.84rem; color:var(--text-secondary); margin-bottom:0.5rem;">
+          ${intent.multi_goal_explanation || 'Bitte wähle eine einzelne Zielgröße (plus Budget-Limit).'}
+        </p>
+        <ul style="padding-left:1.2rem; font-size:0.82rem; margin-bottom:0.5rem;">${goalsList}</ul>
+        <div>${suggestions}</div>
+      `;
+      box.style.display = 'block';
+      box.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function applySuggestedPrompt(text) {
+      document.getElementById('userInput').value = text;
+      document.getElementById('multiGoalAlertBox').style.display = 'none';
+      startSimulation();
+    }
+
+    function encodeContextHint(hint) {
+      if (!hint) return '';
+      return encodeURIComponent(String(hint).slice(0, 260));
+    }
+
+    function renderNewsBadge(aid, contextHint = '') {
+      if (!aid || !aid.startsWith('ART-')) return '';
+      const lookup = (CURRENT_RESULT && CURRENT_RESULT.article_lookup) || {};
+      const info = lookup[aid];
+      const label = info ? info.short_badge : aid;
+      const tip = info ? `[${aid}] ${info.title}` : aid;
+      const encodedHint = encodeContextHint(contextHint);
+      return `<span class="news-badge" onclick="openArticleModal('${aid}', '${encodedHint}')" title="${tip.replace(/"/g, '&quot;')}">📰 ${label}</span>`;
+    }
+
+    function linkifyArticleBadges(text, fallbackContext = '') {
+      if (!text) return '';
+      const ctx = fallbackContext || text;
+      return text.replace(/\[?(ART-\d{8}-\d{3}(?:-\d+)?)\]?/g, (m, aid) => renderNewsBadge(aid, ctx));
+    }
+
+    function stripArticleIdsFromText(text) {
+      if (!text) return '';
+      return text
+        .replace(/\s*\[?(?:ART-\d{8}-\d{3}(?:-\d+)?)(?:\s*,\s*(?:ART-\d{8}-\d{3}(?:-\d+)?))*\]?/g, '')
+        .replace(/\s{2,}/g, ' ')
+        .trim();
+    }
+
+    // ========================================================================
+    // RENDER SCREEN 2: EXECUTIVE DASHBOARD
+    // ========================================================================
+    function renderExecutiveDashboard(sim) {
+      document.getElementById('setupScreen').style.display = 'none';
+      document.getElementById('resultsScreen').style.display = 'block';
+      document.getElementById('backToSetupBtn').style.display = 'inline-flex';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      const cons = sim.final_consensus || {};
+      const fprop = sim.final_main_proposal || {};
+      const intent = sim.intent_info || {};
+      const bcheck = fprop.python_budget_check || {};
+      const isOk = cons.consensus_reached;
+
+      document.getElementById('kpiBanner').innerHTML = `
+        <div class="kpi-tile">
+          <div class="label">Ergebnis</div>
+          <div class="val" style="color:${isOk ? 'var(--green)' : 'var(--red)'};">
+            ${isOk ? 'Konsens erzielt' : 'Kein Konsens'}
+          </div>
+          <div class="sub">Stand nach Runde ${sim.rounds_executed} von max. ${sim.max_rounds} (${sim.elapsed_seconds}s)</div>
+        </div>
+
+        <div class="kpi-tile">
+          <div class="label">Zustimmung (Schnitt / Min)</div>
+          <div class="val">
+            ${cons.average_approval_pct}% <span style="font-size:0.95rem; font-weight:500; color:var(--text-muted);">/ Min ${cons.min_approval_pct}%</span>
+          </div>
+          <div class="sub">${cons.voting_system_name}</div>
+        </div>
+
+        <div class="kpi-tile">
+          <div class="label">Budget-Bedarf (Runde ${sim.rounds_executed})</div>
+          <div class="val" style="color:${bcheck.verified ? 'var(--text-main)' : 'var(--red)'};">
+            +${fprop.total_budget_impact_pct}% <span style="font-size:0.95rem; font-weight:500; color:var(--text-muted);">(${fprop.total_cost_mio_eur} Mio. €)</span>
+          </div>
+          <div class="sub">Limit: max. ${intent.max_budget_pct}% (${(intent.max_budget_pct * 578.37).toFixed(0)} Mio. €)</div>
+        </div>
+
+        <div class="kpi-tile">
+          <div class="label">System-Effekt vs. Ziel</div>
+          <div class="val" style="color:var(--accent);">
+            +${fprop.total_expected_effect_pct}% <span style="font-size:0.95rem; font-weight:500; color:var(--text-muted);">/ Ziel: ${intent.target_goal_pct}%</span>
+          </div>
+          <div class="sub">${intent.target_metric_name} (${intent.timeframe_years} J.)</div>
+        </div>
+      `;
+
+      SELECTED_EXEC_ROUND_IDX = (sim.rounds || []).length - 1;
+      renderExecRoundSwitcher(sim);
+      selectExecRound(SELECTED_EXEC_ROUND_IDX);
+
+      renderNegotiationPhasesTab(sim);
+
+      const recSel = document.getElementById('recRoleSelect');
+      recSel.innerHTML = '';
+      (CONFIG.roles || []).forEach(r => {
+        if (sim.selected_role_ids.includes(r.role_id)) {
+          const opt = document.createElement('option');
+          opt.value = r.role_id;
+          opt.textContent = `${r.icon} ${r.name}`;
+          recSel.appendChild(opt);
+        }
+      });
+      document.getElementById('recommendationOutput').innerHTML = '';
+    }
+
+    function renderExecRoundSwitcher(sim) {
+      const bar = document.getElementById('execRoundPills');
+      bar.innerHTML = '';
+      (sim.rounds || []).forEach((r, idx) => {
+        const btn = document.createElement('button');
+        btn.className = `phase-pill ${idx === SELECTED_EXEC_ROUND_IDX ? 'active' : ''}`;
+        const statusIcon = r.consensus && r.consensus.consensus_reached ? '✓' : '';
+        btn.textContent = `Runde ${r.round_num} (Ø ${r.consensus ? r.consensus.average_approval_pct : '-'}% ${statusIcon})`.trim();
+        btn.onclick = () => selectExecRound(idx);
+        bar.appendChild(btn);
+      });
+    }
+
+    function selectExecRound(roundIdx) {
+      if (!CURRENT_RESULT || !CURRENT_RESULT.rounds || !CURRENT_RESULT.rounds[roundIdx]) return;
+      SELECTED_EXEC_ROUND_IDX = roundIdx;
+
+      const pills = document.querySelectorAll('#execRoundPills .phase-pill');
+      pills.forEach((b, i) => b.classList.toggle('active', i === roundIdx));
+
+      const r = CURRENT_RESULT.rounds[roundIdx];
+      const rCons = r.consensus || {};
+      const isLast = roundIdx === CURRENT_RESULT.rounds.length - 1;
+      const statusText = rCons.consensus_reached
+        ? 'Konsens erreicht'
+        : `Kein Konsens (Ø ${rCons.average_approval_pct}%, Min ${rCons.min_approval_pct}%)`;
+
+      document.getElementById('execActiveRoundTitle').textContent =
+        `Verhandlungsrunde ${r.round_num} von ${CURRENT_RESULT.rounds.length}${isLast ? ' (Endstand)' : ''} — ${statusText}`;
+
+      document.getElementById('chartBubbleTitle').textContent =
+        `Kosten-Wirkungs-Verhältnis in Runde ${r.round_num} (Mio. € vs. Effekt %)`;
+
+      renderExecutiveCharts(CURRENT_RESULT, roundIdx);
+      renderExecutiveSummaryCards(CURRENT_RESULT, roundIdx);
+    }
+
+    function renderExecutiveSummaryCards(sim, roundIdx) {
+      const r = sim.rounds[roundIdx] || {};
+      const fprop = r.main_proposal || sim.final_main_proposal || {};
+      const cons = r.consensus || sim.final_consensus || {};
+      const rStates = r.agent_states || [];
+      const intent = sim.intent_info || {};
+
+      const allMeasureSources = new Set();
+      const measuresRows = (fprop.measures || []).map(m => {
+        const ctxHint = `${m.title} ${m.description || ''}`;
+        (m.source_article_ids || []).forEach(id => allMeasureSources.add(id));
+        const diffNote = m.fact_check_diff
+          ? `<div style="font-size:0.74rem; color:var(--text-muted); margin-top:0.22rem;">↳ <em>Faktencheck:</em> ${m.fact_check_diff}</div>`
+          : '';
+        return `
+          <tr>
+            <td>
+              <strong>${m.title}</strong>
+              <div style="font-size:0.81rem; color:var(--text-secondary); margin-top:0.18rem;">${m.description || ''}</div>
+              ${diffNote}
+            </td>
+            <td style="white-space:nowrap; font-weight:600;">
+              ${m.cost_mio_eur} Mio. €
+              <div style="color:var(--text-muted); font-size:0.75rem; font-weight:400;">${m.budget_impact_pct}% Budget</div>
+            </td>
+            <td style="white-space:nowrap; font-weight:700; color:var(--green);">+${m.expected_effect_pct}%</td>
+            <td>${(m.source_article_ids || []).map(id => renderNewsBadge(id, ctxHint)).join(' ')}</td>
+          </tr>
+        `;
+      }).join('');
+
+      document.getElementById('execCompromiseCard').innerHTML = `
+        <div class="section-header" style="margin-bottom:0.65rem;">
+          <div class="section-title">Kompromiss-Paket (Verhandlungsrunde ${r.round_num})</div>
+          <span class="param-val-pill">Summe: ${fprop.total_cost_mio_eur} Mio. € (${fprop.total_budget_impact_pct}%) → +${fprop.total_expected_effect_pct}% Effekt</span>
+        </div>
+
+        <ul style="margin:0 0 1rem 1.25rem; font-size:0.88rem; line-height:1.6;">
+          <li><strong>Paket-Kern:</strong> ${stripArticleIdsFromText(fprop.summary || '')} — ${stripArticleIdsFromText(fprop.mediator_statement || '')}</li>
+          ${fprop.alliances_analysis ? `<li><strong>Tragende Allianzen:</strong> ${stripArticleIdsFromText(fprop.alliances_analysis)}</li>` : ''}
+          ${fprop.blockers_pressure ? `<li><strong>Offener Konfliktpunkt:</strong> ${stripArticleIdsFromText(fprop.blockers_pressure)}</li>` : ''}
+        </ul>
+
+        <table class="clean-table">
+          <thead>
+            <tr>
+              <th style="width:48%;">Maßnahme</th>
+              <th>Kosten (Budget-%)</th>
+              <th>System-Effekt</th>
+              <th>Quellen</th>
+            </tr>
+          </thead>
+          <tbody>${measuresRows}</tbody>
+          <tfoot>
+            <tr>
+              <td>Gesamtsumme Kompromiss-Paket (${(fprop.measures || []).length} Maßnahmen)</td>
+              <td style="white-space:nowrap; color:var(--accent);">
+                ${fprop.total_cost_mio_eur} Mio. €
+                <span style="font-size:0.78rem; color:var(--text-muted); font-weight:600;">(${fprop.total_budget_impact_pct}% von max. ${intent.max_budget_pct}%)</span>
+              </td>
+              <td style="white-space:nowrap; color:var(--green); font-size:0.96rem;">
+                +${fprop.total_expected_effect_pct}%
+                <span style="font-size:0.76rem; color:var(--text-muted); font-weight:500;">(Ziel: ${intent.target_goal_pct}%)</span>
+              </td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      `;
+
+      const roleRows = rStates.map(s => {
+        const sc = s.approval_score_pct || 0;
+        const col = sc >= 72 ? 'var(--green)' : (sc >= 60 ? 'var(--amber)' : 'var(--red)');
+        const prop = s.proposal || {};
+        const bullets = (s.core_bullets && s.core_bullets.length)
+          ? s.core_bullets.slice(0, 2)
+          : [s.executive_point || ''];
+        const bulletsHtml = bullets.map(b => `<li>${stripArticleIdsFromText(b)}</li>`).join('');
+        return `
+          <tr>
+            <td style="white-space:nowrap;">
+              <strong style="font-size:0.92rem;">${s.role_icon} ${s.role_short_name}</strong>
+              <div style="font-size:0.74rem; color:var(--text-muted); margin-top:0.15rem;">
+                Eigenes Paket: ${prop.total_cost_mio_eur || 0} Mio. € (${prop.total_budget_impact_pct || 0}%) → +${prop.total_expected_effect_pct || 0}%
+              </div>
+            </td>
+            <td style="font-weight:800; font-size:1.05rem; color:${col}; white-space:nowrap;">${sc}%</td>
+            <td>
+              <ul style="margin:0 0 0.3rem 1.1rem; font-size:0.84rem;">${bulletsHtml}</ul>
+              <div style="font-size:0.8rem; color:var(--text-secondary);">
+                <strong>Bedingung / Votum:</strong> ${stripArticleIdsFromText(s.vote_reasoning || '-')}
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      document.getElementById('execScorecardCard').innerHTML = `
+        <div class="section-header" style="margin-bottom:0.5rem;">
+          <div class="section-title">Abstimmungs-Übersicht (Runde ${r.round_num})</div>
+          <span style="font-size:0.8rem; color:var(--text-muted);">
+            ${cons.blocking_roles && cons.blocking_roles.length
+              ? `Blockiert durch: <strong>${cons.blocking_roles.join(', ')}</strong>`
+              : '<strong>Alle Rollen über Mindestschwelle</strong>'}
+          </span>
+        </div>
+
+        <table class="clean-table">
+          <thead>
+            <tr>
+              <th style="width:26%;">Institution</th>
+              <th style="width:12%;">Zustimmung</th>
+              <th>Kernpunkte & Bedingung</th>
+            </tr>
+          </thead>
+          <tbody>${roleRows}</tbody>
+        </table>
+      `;
+    }
+
+    function renderExecutiveCharts(sim, activeRoundIdx) {
+      Object.values(CHARTS).forEach(c => c && c.destroy());
+      CHARTS = {};
+
+      const rounds = sim.rounds || [];
+      const activeRound = rounds[activeRoundIdx] || rounds[rounds.length - 1] || {};
+      const rStates = activeRound.agent_states || [];
+      const rProp = activeRound.main_proposal || sim.final_main_proposal || {};
+      const cons = activeRound.consensus || sim.final_consensus || {};
+      const thresh = cons.threshold_line || 75;
+
+      const phaseLabels = [
+        'Eröffnungsrunde',
+        ...rounds.map(r => `Runde ${r.round_num}`),
+      ];
+
+      const datasetsVote = rStates.map(st => {
+        const rid = st.role_id;
+        const openSt = (rounds[0].opening_statements || []).find(x => x.role_id === rid);
+        const r1St = (rounds[0].agent_states || []).find(x => x.role_id === rid);
+        const openVal = (openSt && openSt.approval_score_pct != null)
+          ? openSt.approval_score_pct
+          : (r1St ? r1St.approval_score_pct : 50);
+        const pts = [
+          openVal,
+          ...rounds.map(r => {
+            const found = (r.agent_states || []).find(x => x.role_id === rid);
+            return found ? found.approval_score_pct : 0;
+          }),
+        ];
+        return {
+          label: `${st.role_short_name}`,
+          data: pts,
+          borderColor: st.role_color || '#0071E3',
+          backgroundColor: st.role_color || '#0071E3',
+          tension: 0.25,
+          borderWidth: 2.2,
+          pointRadius: 3.5,
+        };
+      });
+
+      datasetsVote.push({
+        label: `Schwelle (${thresh}%)`,
+        data: phaseLabels.map(() => thresh),
+        borderColor: '#1D8348',
+        borderDash: [5, 4],
+        borderWidth: 1.8,
+        pointRadius: 0,
+      });
+
+      const gridColor = '#E5E5EA';
+      const tickColor = '#6E6E73';
+
+      CHARTS.voting = new Chart(document.getElementById('chartVoting'), {
+        type: 'line',
+        data: { labels: phaseLabels, datasets: datasetsVote },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: { min: 0, max: 100, ticks: { color: tickColor }, grid: { color: gridColor } },
+            x: { ticks: { color: tickColor }, grid: { color: gridColor } },
+          },
+          plugins: { legend: { labels: { color: '#1D1D1F', boxWidth: 10, font: { size: 11 } } } },
+        },
+      });
+
+      // Chart 2: Cost (Mio EUR) vs Effect (%) Bubble Chart for selected round
+      // Kompromiss-Paket has order: 0 and larger radius so it always renders on top when overlapping
+      const bubbleDatasets = rStates.map(s => ({
+        label: s.role_short_name,
+        order: 2,
+        data: [{
+          x: (s.proposal || {}).total_cost_mio_eur || 0,
+          y: (s.proposal || {}).total_expected_effect_pct || 0,
+          r: Math.max(7, Math.round((s.approval_score_pct || 50) / 8)),
+        }],
+        backgroundColor: (s.role_color || '#64748B') + 'CC',
+        borderColor: s.role_color || '#64748B',
+        borderWidth: 1.5,
+      }));
+      bubbleDatasets.push({
+        label: `Kompromiss-Paket (Runde ${activeRound.round_num})`,
+        order: 0,
+        data: [{
+          x: rProp.total_cost_mio_eur || 0,
+          y: rProp.total_expected_effect_pct || 0,
+          r: 18,
+        }],
+        backgroundColor: '#0071E3',
+        borderColor: '#1D1D1F',
+        borderWidth: 3,
+      });
+
+      CHARTS.bubble = new Chart(document.getElementById('chartBubble'), {
+        type: 'bubble',
+        data: { datasets: bubbleDatasets },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: { title: { display: true, text: 'Gesamtkosten (Mio. EUR / Jahr)', color: tickColor }, ticks: { color: tickColor }, grid: { color: gridColor } },
+            y: { title: { display: true, text: 'System-Effekt (%)', color: tickColor }, ticks: { color: tickColor }, grid: { color: gridColor } },
+          },
+          plugins: { legend: { labels: { color: '#1D1D1F', boxWidth: 10, font: { size: 11 } } } },
+        },
+      });
+    }
+
+    // ========================================================================
+    // TAB 2: NEGOTIATION PHASES & SPACIOUS AGENT CARDS WITH 4 DROPDOWNS
+    // ========================================================================
+    function renderNegotiationPhasesTab(sim) {
+      const pillsBar = document.getElementById('phasePillsBar');
+      pillsBar.innerHTML = '';
+
+      const openBtn = document.createElement('button');
+      openBtn.className = 'phase-pill';
+      openBtn.textContent = 'Eröffnungsrunde';
+      openBtn.onclick = () => selectPhaseView('opening', openBtn);
+      pillsBar.appendChild(openBtn);
+
+      sim.rounds.forEach((r, idx) => {
+        const btn = document.createElement('button');
+        btn.className = `phase-pill ${idx === sim.rounds.length - 1 ? 'active' : ''}`;
+        btn.textContent = `Runde ${r.round_num} (Ø ${r.consensus.average_approval_pct}%)`;
+        btn.onclick = () => selectPhaseView(idx, btn);
+        pillsBar.appendChild(btn);
+      });
+
+      selectPhaseView(sim.rounds.length - 1, pillsBar.lastElementChild);
+    }
+
+    function selectPhaseView(key, btnEl) {
+      document.querySelectorAll('#phasePillsBar .phase-pill').forEach(b => b.classList.remove('active'));
+      if (btnEl) btnEl.classList.add('active');
+
+      const container = document.getElementById('phaseDetailContainer');
+      if (key === 'opening') {
+        const openStates = (CURRENT_RESULT.rounds[0] || {}).opening_statements || [];
+        container.innerHTML = `
+          <div class="compact-agents-list">
+            ${openStates.map(s => renderCompactAgentCard(s, true)).join('')}
+          </div>
+        `;
+      } else {
+        const r = CURRENT_RESULT.rounds[key];
+        const mp = r.main_proposal || {};
+        const mpSources = new Set();
+        (mp.cited_article_ids || []).forEach(id => { if (typeof id === 'string' && id.startsWith('ART-')) mpSources.add(id); });
+        (mp.measures || []).forEach(m => (m.source_article_ids || []).forEach(id => { if (typeof id === 'string' && id.startsWith('ART-')) mpSources.add(id); }));
+        const mpText = `${mp.summary || ''} ${mp.mediator_statement || ''}`;
+        const found = mpText.match(/ART-\d{8}-\d{3}(?:-\d+)?/g);
+        if (found) found.forEach(id => mpSources.add(id));
+
+        const mpSourcesBadges = Array.from(mpSources).map(id => renderNewsBadge(id, mpText)).join(' ');
+        const mpSourcesDropdown = mpSources.size > 0 ? `
+          <div style="margin-top:0.75rem; padding-top:0.65rem; border-top:1px solid var(--border);">
+            <details class="drilldown">
+              <summary>Quellen des Kompromiss-Proposals (${mpSources.size})</summary>
+              <div class="dropdown-inner">
+                <div><strong>Im Kompromiss-Proposal berücksichtigte Presseartikel (Klick öffnet Volltext):</strong></div>
+                <div style="margin-top:0.4rem;">${mpSourcesBadges}</div>
+              </div>
+            </details>
+          </div>
+        ` : '';
+
+        container.innerHTML = `
+          <div style="margin-bottom:1.65rem; padding:1.35rem 1.65rem; background:var(--bg-subtle); border:1px solid var(--border-strong); border-radius:var(--radius-md);">
+            <div style="margin-bottom:0.75rem;">
+              <strong style="color:var(--text-main); font-size:1.08rem;">Kompromiss-Proposal (Runde ${r.round_num}): ${stripArticleIdsFromText(mp.summary || '')}</strong>
+            </div>
+            <div class="agent-kpi-line" style="background:#fff; margin-bottom:0.85rem;">
+              <div class="agent-kpi-item">
+                <span class="kpi-lbl">Gesamtkosten:</span>
+                <span class="kpi-val" style="color:var(--accent);">${mp.total_cost_mio_eur} Mio. €</span>
+              </div>
+              <div class="agent-kpi-item">
+                <span class="kpi-lbl">Budget-Anteil:</span>
+                <span class="kpi-val">${mp.total_budget_impact_pct}%</span>
+              </div>
+              <div class="agent-kpi-item">
+                <span class="kpi-lbl">System-Effekt:</span>
+                <span class="kpi-val" style="color:var(--green);">+${mp.total_expected_effect_pct}%</span>
+              </div>
+            </div>
+            <p style="font-size:0.92rem; color:var(--text-secondary); line-height:1.6;">${stripArticleIdsFromText(mp.mediator_statement || '')}</p>
+            ${mpSourcesDropdown}
+          </div>
+          <div class="compact-agents-list">
+            ${(r.agent_states || []).map(s => renderCompactAgentCard(s, false)).join('')}
+          </div>
+        `;
+      }
+    }
+
+    function renderCompactAgentCard(s, isOpening) {
+      const hasScore = !isOpening && s.approval_score_pct != null;
+      const sc = hasScore ? s.approval_score_pct : 0;
+      const scBg = !hasScore
+        ? 'var(--bg-subtle)'
+        : (sc >= 72 ? 'var(--green-bg)' : (sc >= 60 ? 'var(--amber-bg)' : 'var(--red-bg)'));
+      const scCol = !hasScore
+        ? 'var(--text-secondary)'
+        : (sc >= 72 ? 'var(--green)' : (sc >= 60 ? 'var(--amber)' : 'var(--red)'));
+      const scoreBadgeLabel = hasScore ? `${sc}% Zustimmung` : 'Eröffnungsrunde (Startposition)';
+      const prop = s.proposal || {};
+      const fc = s.fact_check || {};
+
+      // Clean bullet points WITHOUT source badges (since sources have their own dropdown)
+      const rawBullets = (s.core_bullets && s.core_bullets.length)
+        ? s.core_bullets
+        : [s.executive_point || ''].filter(Boolean);
+
+      const cleanBulletsHtml = rawBullets
+        .map(b => `<li>${stripArticleIdsFromText(b)}</li>`)
+        .join('');
+
+      const voteReasonClean = (!isOpening && s.vote_reasoning)
+        ? `<li><strong>Bedingung fürs Votum:</strong> ${stripArticleIdsFromText(s.vote_reasoning)}</li>`
+        : '';
+
+      // Line-by-line individual measures (without bubbles)
+      const measureLinesHtml = (prop.measures || []).map(m => `
+        <div class="agent-proposal-line">
+          <span class="agent-proposal-title">${m.title}</span>
+          <span class="agent-proposal-metrics">
+            ${m.cost_mio_eur} Mio. € (${m.budget_impact_pct}% Budget) &nbsp;→&nbsp; <strong style="color:var(--green);">+${m.expected_effect_pct}% Effekt</strong>
+          </span>
+        </div>
+      `).join('');
+
+      // Dropdown 2: Sources & inspected opponent articles
+      const contextForBadges = `${s.executive_point || ''} ${s.position_statement || ''} ${s.token_article_critique || ''}`;
+      const citedBadges = (s.cited_article_ids || []).map(id => renderNewsBadge(id, contextForBadges)).join(' ');
+      const tokenBadgesHtml = (!isOpening && (s.tokens_used_on_articles || []).length)
+        ? `<div style="margin-top:0.65rem;">
+            <strong>Geprüfte Gegner-Quellen:</strong><br/>
+            ${s.tokens_used_on_articles.map(t => `${renderNewsBadge(t.article_id, s.token_article_critique || contextForBadges)} <span style="color:var(--text-muted); font-size:0.8rem;">(zitiert von ${t.inspected_from_role})</span>`).join(' &nbsp;•&nbsp; ')}
+          </div>`
+        : '';
+
+      // Dropdown 3: Fact-Checker details
+      const measureDiffsHtml = (prop.measures || [])
+        .filter(m => m.fact_check_diff)
+        .map(m => `<li style="margin-bottom:0.25rem;"><strong>${m.title}:</strong> ${m.fact_check_diff}</li>`)
+        .join('');
+
+      // Dropdown 4: PolicyCalculator steps
+      const calcStepsHtml = (fc.calculator_steps || []).map(c =>
+        `<div style="font-family:ui-monospace, SFMono-Regular, Menlo, monospace; font-size:0.78rem; margin-bottom:0.35rem; color:var(--text-secondary);">
+          <strong>[${c.trace_id}] ${c.function_name}</strong> (${c.label}): <code>${c.formula}</code>
+        </div>`
+      ).join('');
+
+      return `
+        <div class="compact-agent-card" style="border-left: 5px solid ${s.role_color || '#0071E3'};">
+          <!-- 1. Top Row: Role Name (large) + Approval Score (large pill) -->
+          <div class="agent-card-top">
+            <div class="agent-role-heading">
+              <span>${s.role_icon}</span>
+              <span>${s.role_name}</span>
+            </div>
+            <div class="score-pill-large" style="background:${scBg}; color:${scCol};">
+              ${scoreBadgeLabel}
+            </div>
+          </div>
+
+          ${!isOpening ? `
+            <!-- 2. Single-Line KPI Summary: Gesamtkosten, Budget-Anteil, System-Effekt side by side (no bubbles) -->
+            <div class="agent-kpi-line">
+              <div class="agent-kpi-item">
+                <span class="kpi-lbl">Gesamtkosten:</span>
+                <span class="kpi-val" style="color:var(--accent);">${prop.total_cost_mio_eur || 0} Mio. €</span>
+              </div>
+              <div class="agent-kpi-item">
+                <span class="kpi-lbl">Budget-Anteil:</span>
+                <span class="kpi-val">${prop.total_budget_impact_pct || 0}%</span>
+              </div>
+              <div class="agent-kpi-item">
+                <span class="kpi-lbl">System-Effekt:</span>
+                <span class="kpi-val" style="color:var(--green);">+${prop.total_expected_effect_pct || 0}%</span>
+              </div>
+            </div>
+
+            <!-- 3. Line-by-Line Proposals (no bubbles) -->
+            <div class="agent-proposals-block">
+              <div class="agent-section-label">Vorgeschlagene Einzel-Maßnahmen</div>
+              ${measureLinesHtml || '<div style="font-size:0.88rem; color:var(--text-muted);">Keine Einzelmaßnahmen angegeben.</div>'}
+            </div>
+          ` : ''}
+
+          <!-- 4. Indented Argument Bullet Points (without source clutter) -->
+          <div class="agent-bullets-section">
+            <div class="agent-section-label">Kernargumente & Position</div>
+            <ul class="agent-bullets-list">
+              ${cleanBulletsHtml}
+              ${voteReasonClean}
+            </ul>
+          </div>
+
+          <!-- 5. Four Clean Separate Dropdowns -->
+          <div class="agent-dropdowns-grid">
+            <details class="drilldown">
+              <summary>1. Ausführliche Antworten & Quellen-Kritik</summary>
+              <div class="dropdown-inner">
+                <div style="margin-bottom:0.65rem;">
+                  <strong>Positions-Statement:</strong>
+                  <div style="margin-top:0.2rem;">${linkifyArticleBadges(s.position_statement || '', s.position_statement)}</div>
+                </div>
+                ${(!isOpening && s.token_article_critique) ? `
+                  <div style="margin-bottom:0.65rem;">
+                    <strong>Kritik an geprüften Gegner-Quellen:</strong>
+                    <div style="margin-top:0.2rem;">${linkifyArticleBadges(s.token_article_critique, s.token_article_critique)}</div>
+                  </div>
+                ` : ''}
+                ${(!isOpening && s.rebuttal_to_others) ? `
+                  <div>
+                    <strong>Direkte Antwort auf Verhandlungspartner:</strong>
+                    <div style="margin-top:0.2rem;">${linkifyArticleBadges(s.rebuttal_to_others, s.rebuttal_to_others)}</div>
+                  </div>
+                ` : ''}
+              </div>
+            </details>
+
+            <details class="drilldown">
+              <summary>2. Quellen (${(s.cited_article_ids || []).length})</summary>
+              <div class="dropdown-inner">
+                <div><strong>Verwendete Zeitungsartikel (Klick öffnet Volltext & markiert Stelle):</strong></div>
+                <div style="margin-top:0.4rem;">${citedBadges || 'Keine Quellen'}</div>
+                ${tokenBadgesHtml}
+              </div>
+            </details>
+
+            ${!isOpening ? `
+              <details class="drilldown">
+                <summary>3. Fact-Checker</summary>
+                <div class="dropdown-inner">
+                  <div style="margin-bottom:0.4rem;"><strong>Status:</strong> ${fc.badge || 'Geprüft'}</div>
+                  <div style="margin-bottom:0.45rem;">${fc.notes || 'Alle Zahlen geprüft.'}</div>
+                  ${measureDiffsHtml ? `<ul style="padding-left:1.1rem; font-size:0.82rem;">${measureDiffsHtml}</ul>` : ''}
+                </div>
+              </details>
+
+              <details class="drilldown">
+                <summary>4. PolicyCalculator (${(fc.calculator_steps || []).length} Schritte)</summary>
+                <div class="dropdown-inner">
+                  ${calcStepsHtml || 'Keine Rechenschritte protokolliert.'}
+                </div>
+              </details>
+            ` : ''}
+          </div>
+        </div>
+      `;
+    }
+
+    // ========================================================================
+    // TAB 3: STRATEGIC ACTION RECOMMENDATION (MORE SPACING)
+    // ========================================================================
+    async function generateRecommendation() {
+      if (!CURRENT_RESULT) return;
+      const roleId = document.getElementById('recRoleSelect').value;
+      const btn = document.getElementById('genRecBtn');
+      const out = document.getElementById('recommendationOutput');
+      btn.disabled = true;
+      out.innerHTML = `<div style="color:var(--text-muted); font-size:0.9rem; padding:0.5rem 0;">Erstelle Kurz-Briefing...</div>`;
+
+      const res = await fetch('/api/recommendation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ job_id: CURRENT_JOB_ID, role_id: roleId, simulation_result: CURRENT_RESULT }),
+      });
+      const rec = await res.json();
+      btn.disabled = false;
+
+      const attacksRows = (rec.expected_attacks_and_counters || []).map(a => `
+        <tr>
+          <td style="white-space:nowrap; font-weight:700; padding:0.9rem;">${a.from_institution}</td>
+          <td style="color:var(--text-secondary); padding:0.9rem;">${linkifyArticleBadges(a.expected_attack, a.expected_attack)}</td>
+          <td style="padding:0.9rem;"><strong>${linkifyArticleBadges(a.recommended_counter, a.recommended_counter)}</strong></td>
+        </tr>
+      `).join('');
+
+      out.innerHTML = `
+        <div style="background:var(--bg-subtle); border:1px solid var(--border-strong); border-radius:var(--radius-lg); padding:1.75rem 2rem;">
+          <h3 style="font-size:1.18rem; margin-bottom:0.55rem;">${rec.role_icon} Kurz-Briefing: ${rec.role_name}</h3>
+          <p style="font-size:0.94rem; color:var(--text-secondary); margin-bottom:1.4rem; line-height:1.6;">${linkifyArticleBadges(rec.executive_summary, rec.executive_summary)}</p>
+
+          <h4 style="font-size:0.84rem; text-transform:uppercase; letter-spacing:0.04em; color:var(--text-muted); margin-bottom:0.65rem;">
+            Erwartete Gegenargumente & Fakten-Konter
+          </h4>
+          <table class="clean-table" style="background:#fff; border-radius:10px; overflow:hidden; margin-bottom:1.5rem;">
+            <thead>
+              <tr>
+                <th style="width:20%; padding:0.85rem 0.9rem;">Gegenspieler</th>
+                <th style="width:40%; padding:0.85rem 0.9rem;">Erwarteter Angriff</th>
+                <th style="width:40%; padding:0.85rem 0.9rem;">Empfohlener Konter (inkl. Quelle)</th>
+              </tr>
+            </thead>
+            <tbody>${attacksRows}</tbody>
+          </table>
+
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); gap:1.25rem;">
+            <div style="background:#fff; border:1px solid var(--border); border-radius:var(--radius-md); padding:1.25rem 1.4rem;">
+              <strong style="font-size:0.92rem; color:var(--green); display:block; margin-bottom:0.65rem;">Koalitionspartner</strong>
+              <ul style="padding-left:1.2rem; font-size:0.88rem; line-height:1.65;">
+                ${(rec.strategic_alliances || []).map(x => `<li style="margin-bottom:0.4rem;">${linkifyArticleBadges(x, x)}</li>`).join('')}
+              </ul>
+            </div>
+            <div style="background:#fff; border:1px solid var(--border); border-radius:var(--radius-md); padding:1.25rem 1.4rem;">
+              <strong style="font-size:0.92rem; color:var(--amber); display:block; margin-bottom:0.65rem;">Red Lines & Tauschgeschäfte</strong>
+              <ul style="padding-left:1.2rem; font-size:0.88rem; line-height:1.65;">
+                ${(rec.negotiation_red_lines_and_fallbacks || []).map(x => `<li style="margin-bottom:0.4rem;">${linkifyArticleBadges(x, x)}</li>`).join('')}
+              </ul>
+            </div>
+            <div style="background:#fff; border:1px solid var(--border); border-radius:var(--radius-md); padding:1.25rem 1.4rem;">
+              <strong style="font-size:0.92rem; color:var(--accent); display:block; margin-bottom:0.65rem;">Nächste Schritte</strong>
+              <ol style="padding-left:1.2rem; font-size:0.88rem; line-height:1.65;">
+                ${(rec.concrete_next_steps || []).map(x => `<li style="margin-bottom:0.4rem;">${linkifyArticleBadges(x, x)}</li>`).join('')}
+              </ol>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // ========================================================================
+    // ZERO-TOKEN SENTENCE HIGHLIGHTING IN ARTICLE MODAL
+    // ========================================================================
+    function highlightRelevantSentences(articleText, decodedHint) {
+      const safeText = (articleText || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const stopWords = new Set([
+        'der','die','das','und','in','im','den','von','zu','mit','sich','auf','für','ist','dem','nicht',
+        'ein','eine','als','auch','es','an','werden','aus','er','hat','dass','sie','nach','wird','bei',
+        'einer','um','am','sind','noch','wie','einem','über','einen','so','zum','war','haben','nur',
+        'oder','aber','vor','zur','bis','mehr','durch','man','sein','wurde','sei','prozent','mio','eur',
+        'euro','jahr','jahren','sowie','ohne','unter','soll','sollen','kann','können','muss','müssen'
+      ]);
+
+      const rawSource = `${decodedHint || ''} ${(CURRENT_RESULT && CURRENT_RESULT.user_input) || ''}`;
+      const tokens = rawSource
+        .toLowerCase()
+        .replace(/[^a-zäöüß0-9%]/gi, ' ')
+        .split(/\s+/)
+        .filter(w => (w.length >= 4 && !stopWords.has(w)) || /^\d+$/.test(w));
+
+      const uniqueTerms = Array.from(new Set(tokens));
+      if (!uniqueTerms.length) return { html: safeText, matchCount: 0 };
+
+      const sentences = safeText.split(/(?<=[.!?])\s+/);
+      const scored = sentences.map((s, idx) => {
+        const low = s.toLowerCase();
+        let score = 0;
+        uniqueTerms.forEach(t => {
+          if (low.includes(t)) {
+            score += /^\d+$/.test(t) ? 3 : 2;
+          }
+        });
+        if (/\d+\s*(?:%|prozent|mio|millionen|milliarden|euro)/i.test(s)) {
+          score += 1.5;
+        }
+        return { idx, score, text: s };
+      });
+
+      const topIndices = new Set(
+        scored
+          .filter(x => x.score >= 3 && x.text.length > 25)
+          .sort((a, b) => b.score - a.score)
+          .slice(0, 3)
+          .map(x => x.idx)
+      );
+
+      if (!topIndices.size) return { html: safeText, matchCount: 0 };
+
+      const highlighted = sentences
+        .map((s, idx) => topIndices.has(idx) ? `<mark class="sentence-highlight">${s}</mark>` : s)
+        .join(' ');
+      return { html: highlighted, matchCount: topIndices.size };
+    }
+
+    async function openArticleModal(articleId, encodedHint = '') {
+      const modal = document.getElementById('articleModal');
+      const titleEl = document.getElementById('modalTitle');
+      const bodyEl = document.getElementById('modalBody');
+      modal.classList.add('open');
+      titleEl.textContent = 'Lade Zeitungsartikel...';
+      bodyEl.textContent = 'Lade Volltext aus presse_db.sqlite...';
+
+      let decodedHint = '';
+      try {
+        decodedHint = encodedHint ? decodeURIComponent(encodedHint) : '';
+      } catch (e) {
+        decodedHint = '';
+      }
+
+      const res = await fetch(`/api/article?id=${encodeURIComponent(articleId)}`);
+      const art = await res.json();
+      if (art.error) {
+        titleEl.textContent = 'Artikel nicht gefunden';
+        bodyEl.textContent = art.error;
+        return;
+      }
+
+      const { html: highlightedContent, matchCount } = highlightRelevantSentences(art.content || '', decodedHint);
+
+      titleEl.textContent = `📰 ${art.short_badge || art.newspaper} — „${art.title}“`;
+      bodyEl.innerHTML = `
+        <div style="margin-bottom:1rem; padding:0.7rem 1rem; background:var(--bg-subtle); border:1px solid var(--border); border-radius:var(--radius-sm); font-size:0.82rem; color:var(--text-muted); display:flex; justify-content:space-between; flex-wrap:wrap; gap:0.5rem;">
+          <div><strong>Medium:</strong> ${art.newspaper} &nbsp;|&nbsp; <strong>Datum:</strong> ${art.date_de || art.article_date} &nbsp;|&nbsp; <strong>ID:</strong> <code>${art.article_id}</code></div>
+          ${matchCount > 0 ? `<div style="color:var(--amber); font-weight:600;">🔍 ${matchCount} relevante Textstelle(n) hervorgehoben</div>` : ''}
+        </div>
+        <div style="white-space:pre-wrap; font-size:0.95rem; line-height:1.7;">${highlightedContent}</div>
+      `;
+
+      setTimeout(() => {
+        const firstMark = bodyEl.querySelector('mark.sentence-highlight');
+        if (firstMark) {
+          firstMark.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 80);
+    }
+
+    // Formatted Visual Dashboard for Grundfakten (instead of raw JSON dump!)
+    function openGrundfaktenModal() {
+      const modal = document.getElementById('articleModal');
+      document.getElementById('modalTitle').textContent = '📊 Grundfakten Gesundheitssystem Österreich (Statistik Austria / grundfakten.yaml)';
+      const g = (CONFIG && CONFIG.grundfakten) || {};
+      const b = g.budget_mio_eur || {};
+      const kap = g.kapazitaet || {};
+      const fl = g.fluesse || {};
+      const nb = g.niedergelassener_bereich_2024 || {};
+      const fin = g.finanzierungstraeger_2024 || {};
+
+      const fmt = (n) => (typeof n === 'number' ? n.toLocaleString('de-AT') : (n ?? '-'));
+
+      document.getElementById('modalBody').innerHTML = `
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:0.9rem; margin-bottom:1.4rem;">
+          <div class="param-box">
+            <div style="font-size:0.74rem; color:var(--text-muted); text-transform:uppercase; font-weight:600;">Bevölkerung Österreich</div>
+            <div style="font-size:1.4rem; font-weight:700; margin-top:0.2rem;">${fmt(g.bevoelkerung_est)}</div>
+            <div style="font-size:0.75rem; color:var(--text-muted);">Stand 1.1.2025</div>
+          </div>
+          <div class="param-box">
+            <div style="font-size:0.74rem; color:var(--text-muted); text-transform:uppercase; font-weight:600;">Laufende Gesundheitsausgaben (2024)</div>
+            <div style="font-size:1.4rem; font-weight:700; color:var(--accent); margin-top:0.2rem;">${fmt((b.gesamt_laufend || [])[2])} Mio. €</div>
+            <div style="font-size:0.75rem; color:var(--text-muted);">1% Budget = 578,37 Mio. €</div>
+          </div>
+          <div class="param-box">
+            <div style="font-size:0.74rem; color:var(--text-muted); text-transform:uppercase; font-weight:600;">Kassenärzt:innen vs. Wahlärzt:innen</div>
+            <div style="font-size:1.4rem; font-weight:700; color:var(--green); margin-top:0.2rem;">${fmt(nb['kassenaerzte_vertragsaerzte_~'])} / ${fmt(nb['wahlaerzte_ohne_kassenvertrag_~'])}</div>
+            <div style="font-size:0.75rem; color:var(--text-muted);">Unbesetzte Kassenstellen: ~${fmt(nb['unbesetzte_kassenstellen_~'])}</div>
+          </div>
+          <div class="param-box">
+            <div style="font-size:0.74rem; color:var(--text-muted); text-transform:uppercase; font-weight:600;">Primärversorgungseinheiten (PVE)</div>
+            <div style="font-size:1.4rem; font-weight:700; margin-top:0.2rem;">${fmt(nb.primaerversorgungseinheiten_pve_bestand)} Bestand</div>
+            <div style="font-size:0.75rem; color:var(--text-muted);">Ziel 2025+: ${fmt(nb.primaerversorgungseinheiten_pve_ziel_2025)} PVE</div>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(460px, 1fr)); gap:1.25rem;">
+          <div>
+            <h4 style="font-size:0.9rem; margin-bottom:0.4rem;">1. Gesundheitsbudget nach Sektoren (Mio. EUR)</h4>
+            <table class="clean-table">
+              <thead>
+                <tr><th>Sektor</th><th>2022</th><th>2023</th><th>2024 (Basis)</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><strong>Gesamt laufend</strong></td><td>${fmt((b.gesamt_laufend||[])[0])}</td><td>${fmt((b.gesamt_laufend||[])[1])}</td><td><strong>${fmt((b.gesamt_laufend||[])[2])} Mio. €</strong></td></tr>
+                <tr><td>Stationärer Bereich (Spitäler)</td><td>${fmt((b.stationaer||[])[0])}</td><td>${fmt((b.stationaer||[])[1])}</td><td>${fmt((b.stationaer||[])[2])} Mio. € (39,3%)</td></tr>
+                <tr><td>Ambulanter Bereich</td><td>${fmt((b.ambulant||[])[0])}</td><td>${fmt((b.ambulant||[])[1])}</td><td>${fmt((b.ambulant||[])[2])} Mio. € (29,7%)</td></tr>
+                <tr><td>Medikamente & Heilbehelfe</td><td>${fmt((b.medikamente||[])[0])}</td><td>${fmt((b.medikamente||[])[1])}</td><td>${fmt((b.medikamente||[])[2])} Mio. € (15,2%)</td></tr>
+                <tr><td>Häusliche & Langzeitpflege</td><td>${fmt((b.haeusliche_pflege||[])[0])}</td><td>${fmt((b.haeusliche_pflege||[])[1])}</td><td>${fmt((b.haeusliche_pflege||[])[2])} Mio. € (6,0%)</td></tr>
+                <tr><td>Prävention & Vorsorge</td><td>${fmt((b.praevention||[])[0])}</td><td>${fmt((b.praevention||[])[1])}</td><td>${fmt((b.praevention||[])[2])} Mio. € (2,1%)</td></tr>
+                <tr><td>Kosten pro Spitalsaufenthalt</td><td>${fmt((b['kosten_pro_aufenthalt_eur_~']||[])[0])} €</td><td>${fmt((b['kosten_pro_aufenthalt_eur_~']||[])[1])} €</td><td><strong>${fmt((b['kosten_pro_aufenthalt_eur_~']||[])[2])} €</strong></td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div>
+            <h4 style="font-size:0.9rem; margin-bottom:0.4rem;">2. Kapazitäten, Personal & Einheitskosten (2024)</h4>
+            <table class="clean-table">
+              <thead>
+                <tr><th>Kennzahl / System-Anker</th><th>Wert 2024</th><th>Referenz / Einheitskosten</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Akutbetten in Spitälern</td><td><strong>${fmt((kap.betten_akut||[])[2])} Betten</strong></td><td>Auslastung: ${(((kap['auslastung_akut_~']||[])[2]||0)*100).toFixed(1)}%</td></tr>
+                <tr><td>Ärzt:innen im Spital</td><td><strong>${fmt((kap.aerzte_spital||[])[2])} Personen</strong></td><td>Vollstationäre Fälle: ${fmt((fl.akut_vollstationaer||[])[2])}</td></tr>
+                <tr><td>Pflegekräfte (DGKP) im Spital</td><td><strong>${fmt((kap.pflege_dgkp_spital||[])[2])} Personen</strong></td><td>Tagesklinische Fälle: ${fmt((fl.akut_tagesklinik||[])[2])}</td></tr>
+                <tr><td>Kassenärzt:innen (Vertragsärzte)</td><td><strong>${fmt(nb['kassenaerzte_vertragsaerzte_~'])} Praxen</strong></td><td>~${nb['kosten_pro_kassenstelle_inkl_tarifreform_mio_eur_~']} Mio. € / Stelle inkl. Tarifreform</td></tr>
+                <tr><td>Primärversorgungseinheit (PVE)</td><td><strong>${fmt(nb.primaerversorgungseinheiten_pve_bestand)} Zentren</strong></td><td>~${nb['kosten_pro_pve_pro_jahr_mio_eur_~']} Mio. € / Jahr je PVE</td></tr>
+                <tr><td>Facharzt- / Ambulanzzentrum</td><td><strong>600 Äquiv.</strong></td><td>~${nb['kosten_pro_facharztzentrum_mio_eur_~']} Mio. € / Jahr je Zentrum</td></tr>
+                <tr><td>Finanzierungsanteile (Öffentlich)</td><td><strong>${fmt(fin['oeffentlich_gesamt_mio_eur_~'])} Mio. €</strong></td><td>SV: 45,2% • Länder: 22,8% • Bund: 7,7%</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+      modal.classList.add('open');
+    }
+
+    async function openDbSearchModal() {
+      const modal = document.getElementById('articleModal');
+      document.getElementById('modalTitle').textContent = '📰 Presse-Datenbank durchsuchen (11.412 Artikel, 2024–2026)';
+      document.getElementById('modalBody').innerHTML = `
+        <div style="display:flex; gap:0.75rem; margin-bottom:1.15rem;">
+          <input type="text" id="dbModalQuery" value="Wartezeiten, Facharzt, ÖGK" placeholder="Suchbegriffe eingeben..." onkeydown="if(event.key==='Enter') execModalDbSearch()" />
+          <button class="btn-launch" style="width:auto; padding:0.55rem 1.35rem; font-size:0.88rem;" onclick="execModalDbSearch()">Suchen</button>
+        </div>
+        <div id="dbModalResults" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(480px, 1fr)); gap:0.85rem;"></div>
+      `;
+      modal.classList.add('open');
+      execModalDbSearch();
+    }
+
+    async function execModalDbSearch() {
+      const q = document.getElementById('dbModalQuery').value;
+      const res = await fetch(`/api/search_db?q=${encodeURIComponent(q)}`);
+      const data = await res.json();
+      const out = document.getElementById('dbModalResults');
+      out.innerHTML = (data.results || []).map(a => `
+        <div style="padding:0.9rem 1.05rem; background:var(--bg-subtle); border:1px solid var(--border); border-radius:var(--radius-sm); display:flex; flex-direction:column; justify-content:space-between; gap:0.4rem;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:0.5rem; margin-bottom:0.3rem;">
+              <span class="news-badge" onclick="openArticleModal('${a.article_id}', '${encodeContextHint(q)}')">📰 ${a.short_badge || a.newspaper}</span>
+              <code style="font-size:0.72rem; color:var(--text-muted);">${a.article_id}</code>
+            </div>
+            <strong style="color:var(--text-main); font-size:0.92rem; display:block; margin-bottom:0.25rem;">${a.title}</strong>
+            <div style="font-size:0.81rem; color:var(--text-secondary); line-height:1.5;">${(a.content || '').slice(0, 210)}...</div>
+          </div>
+          <div style="text-align:right; margin-top:0.25rem;">
+            <span style="font-size:0.78rem; color:var(--accent); font-weight:600; cursor:pointer;" onclick="openArticleModal('${a.article_id}', '${encodeContextHint(q)}')">Volltext öffnen →</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function closeModal() {
+      document.getElementById('articleModal').classList.remove('open');
+    }
+
+    window.addEventListener('DOMContentLoaded', initApp);
+  </script>
+</body>
+</html>

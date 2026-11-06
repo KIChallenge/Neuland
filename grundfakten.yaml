@@ -1,0 +1,92 @@
+# Österreich Gesundheitssystem 2022–2024 | Quelle: Statistik Austria (Gesundheit 2024; Jahrbücher 2022, 2023)
+# Einheiten: Personen / Fälle pro Jahr / Tage / Mio. EUR nominell | ~ = abgeleitet, est = Schätzung
+
+bevoelkerung_est: 9197213 #Statistik Austria, am 1.1.2025
+
+bestand_2024:
+  krankenstand_gleichzeitig_~: 152000
+  akutspital_gleichzeitig_~: 29800
+  reha_gleichzeitig_est: 13500
+  krebs_praevalenz: 408613
+  erwerbsunfaehigkeitspension: 116686
+
+kapazitaet:                 # [2022, 2023, 2024]
+  betten_gesamt:       [60739, 60306, 60126]
+  betten_akut:         [43736, 43387, 43332]
+  auslastung_akut_~:   [0.674, 0.688, 0.688]
+  aerzte_spital:       [26309, 27003, 27742]
+  pflege_dgkp_spital:  [60896, 61903, 62254]
+
+fluesse:                    # [2022, 2023, 2024]
+  aufenthalte_alle_ka:      [2239801, 2295796, 2337292]
+  akut_vollstationaer:      [1734659, 1757398, 1782595]
+  akut_tagesklinik:         [349004, 373389, 383743]
+  reha:                     [149077, 157756, 164423]
+  verweildauer_akut_tage:   [6.2, 6.2, 6.1]
+  tote_akutspital:          [44003, 42883, 42341]
+  tote_gesamt:              [93332, 89760, 88486]
+  krebs_neuerkrankungen:    [46031, 46797, 48360]
+  krankenstandsfaelle:      [5712742, 6058696, 6035934]
+  krankenstand_dauer_tage:  [9.4, 9.3, 9.2]
+  eu_pension_neu:           [12693, 12872, 12631]
+
+raten_2024:
+  abgang_akut_pro_tag_~: 0.164
+  abgang_reha_pro_tag_est: 0.033
+  abgang_krankenstand_pro_tag_~: 0.109
+
+budget_mio_eur:             # [2022, 2023, 2024]
+  gesamt_laufend:           [50289, 53402, 57837]
+  stationaer:               [18848, 20759, 22733]
+  ambulant:                 [13723, 15315, 17189]
+  medikamente:              [7889, 8325, 8786]
+  haeusliche_pflege:        [2870, 3121, 3496]
+  transport_rettung:        [558, 614, 697]
+  praevention:              [3601, 2047, 1232]
+  kosten_pro_aufenthalt_eur_~: [8415, 9042, 9726]
+
+budget_anteile_2024:
+  stationaer: 0.393
+  ambulant: 0.297
+  medikamente: 0.152
+  haeusliche_pflege: 0.060
+  verwaltung: 0.044
+  praevention: 0.021
+  private_organisationen: 0.017
+  transport_rettung: 0.012
+  betriebsaerztlich: 0.003
+  oeffentlich_finanziert: 0.757
+  langzeitpflege: 0.144
+
+# Ergänzte Eckdaten für niedergelassenen Bereich, ambulante Versorgung & Finanzierungsträger (2024)
+niedergelassener_bereich_2024:
+  aerzte_niedergelassen_gesamt_~: 22100
+  kassenaerzte_vertragsaerzte_~: 8300
+  wahlaerzte_ohne_kassenvertrag_~: 11500
+  unbesetzte_kassenstellen_~: 340
+  primaerversorgungseinheiten_pve_bestand: 75
+  primaerversorgungseinheiten_pve_ziel_2025: 120
+  ecard_konsultationen_mio_pro_jahr_~: 102.5
+  kosten_pro_pve_pro_jahr_mio_eur_~: 3.6
+  kosten_pro_kassenstelle_inkl_tarifreform_mio_eur_~: 1.45
+  kosten_pro_facharztzentrum_mio_eur_~: 5.2
+
+# Referenzwerte für Bestands-basierte Wirkungsberechnung (Relativer Kapazitätszuwachs -> Effekt)
+system_hebel_referenzwerte_2024:
+  kassenstellen_bestand: 8300                  # +100 Kassenstellen = +1,20% Kapazität (~1,6% Wartezeiteffekt; 145 Mio. EUR inkl. Tarifanreiz)
+  pve_aequivalenz_bestand: 850                 # +25 PVE = +2,94% Primärversorgungskapazität (~3,5% Effekt; 90 Mio. EUR)
+  facharztzentren_ambulanz_aequivalenz: 600    # +30 Facharztzentren = +5,0% Kapazität (~5,5% Effekt; 156 Mio. EUR)
+  spitalsbetten_akut_bestand: 43332
+  pflegepersonal_dgkp_bestand: 62254
+  ambulantes_budget_mio_eur: 17189             # 5% Honorar-/Kapazitätsausbau ambulant = 859,5 Mio. EUR (1,49% Gesamtbudget)
+  stationaeres_budget_mio_eur: 22733           # 5% Struktur-/Tagesklinik-Umbau stationär = 1.136,7 Mio. EUR (1,97% Gesamtbudget)
+  max_einzelmassnahme_effekt_pct: 9.5          # Einzelne Maßnahme allein kann österreichweit max. ~9,5% Systemeffekt erzielen
+
+
+finanzierungstraeger_2024:
+  oeffentlich_gesamt_mio_eur_~: 43783       # 75,7% von 57.837 Mio. EUR
+  privat_haushalte_zusatzvers_mio_eur_~: 14054 # 24,3% von 57.837 Mio. EUR
+  anteil_sozialversicherung_oegk_sv: 0.452  # ~26.142 Mio. EUR (trägt Hauptlast im ambulanten/Kassen-Bereich & Medikamente)
+  anteil_bundeslaender_gemeinden: 0.228     # ~13.187 Mio. EUR (tragen Hauptlast & Abgangsdeckung der Landes-Spitäler)
+  anteil_bund_finanzministerium: 0.077      # ~4.454 Mio. EUR (Prävention, Bundesmittel, Finanzausgleichs-Zuschüsse)
+
