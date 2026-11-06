@@ -33,6 +33,7 @@ from calculator import (
     GRUNDFAKTEN_PATH,
     BUDGET_BASELINES_2024_MIO,
     PolicyCalculator,
+    infer_lever_category,
     validate_and_normalize_proposal_budget,
 )
 from db_search import (
@@ -424,6 +425,68 @@ def _run_agent_with_calculator(
     return parsed, calc
 
 
+LEVER_THEMATIC_KEYWORDS: Dict[str, List[str]] = {
+    "kassenstellen": [
+        "kassenstell", "kassenarzt", "kassenärzt", "vertragsarzt", "vertragsärzt",
+        "wahlarzt", "kassensitz", "tarif", "honorar", "ordination", "niedergelass",
+        "randzeit", "kassenvertrag", "ärztemangel", "ärztekammer"
+    ],
+    "pve_primärversorgung": [
+        "primärversorgung", "pve", "gruppenpraxis", "hausarzt", "hausärzt",
+        "allgemeinmediz", "primärversorgungszentrum", "ärztenetzwerk"
+    ],
+    "facharztzentren_ambulanz": [
+        "facharzt", "fachärzt", "ambulanz", "spitalsambulanz", "facharztzentrum",
+        "wartezeit", "spezialversorg", "termin", "ambulanzgebühr"
+    ],
+    "spitalsbetten_tagesklinik": [
+        "spital", "bett", "tagesklinik", "stationär", "krankenhaus", "operation",
+        "op-", "klinik", "chirurg", "akutspital"
+    ],
+    "pflegepersonal_dgkp": [
+        "pflege", "dgkp", "pflegekraft", "pflegekräfte", "pflegepersonal",
+        "community nurse", "krankenpflege", "pflegeausbildung", "pflegenotstand"
+    ],
+    "digitalisierung_1450_elga": [
+        "digital", "1450", "elga", "telemedizin", "e-card", "online",
+        "termin", "triage", "lenkung", "e-health", "videoordination", "bürokratie"
+    ],
+    "praevention_reha": [
+        "prävention", "vorsorge", "reha", "screening", "gesundheitsförderung",
+        "impf", "früherkennung", "gesundheitskompetenz"
+    ],
+}
+
+
+def filter_thematic_sources_for_measures(
+    measures: List[Dict[str, Any]],
+    available_articles: Dict[str, Dict[str, Any]],
+) -> None:
+    """
+    Enforces a strict thematic check: A newspaper article is ONLY attached to a measure
+    if the article text genuinely discusses the topic / lever category of that measure.
+    Prevents random articles from appearing next to unrelated measures!
+    """
+    for m in measures:
+        lever_cat = m.get("lever_category") or infer_lever_category(m.get("title", ""), m.get("description", ""))
+        keywords = LEVER_THEMATIC_KEYWORDS.get(lever_cat, [])
+        valid_sources = []
+        for sid in m.get("source_article_ids", []):
+            art = available_articles.get(sid)
+            if art:
+                text_to_check = (art.get("title", "") + " " + art.get("content", "")).lower()
+                if any(kw in text_to_check for kw in keywords):
+                    valid_sources.append(sid)
+        # If no assigned source matches, check if any article in available_articles genuinely matches this topic
+        if not valid_sources:
+            for aid, art in available_articles.items():
+                text_to_check = (art.get("title", "") + " " + art.get("content", "")).lower()
+                if any(kw in text_to_check for kw in keywords):
+                    valid_sources.append(aid)
+                    break
+        m["source_article_ids"] = list(dict.fromkeys(valid_sources))
+
+
 def fact_check_and_verify_agent_output(
     role: StakeholderRole,
     agent_output: Dict[str, Any],
@@ -450,6 +513,8 @@ def fact_check_and_verify_agent_output(
     ]
     cited_ids = list(dict.fromkeys(cited_ids))
     proposal = agent_output.get("proposal", {})
+    if proposal and proposal.get("measures"):
+        filter_thematic_sources_for_measures(proposal["measures"], available_articles)
     for m in proposal.get("measures", []):
         for sid in m.get("source_article_ids", []):
             if isinstance(sid, str) and sid.strip().startswith("ART-") and sid.strip() not in cited_ids:
@@ -602,6 +667,9 @@ DEINE ZEITUNGSARTIKEL AUS DER PRESSE-DATENBANK ({len(articles)} Artikel):
 
 AUFGABE FÜR DIE ERÖFFNUNGSRUNDE (EINGANGS-POSITION & EIGENES PROPOSAL):
 1. Berechne deine vorgeschlagenen Maßnahmen (2 bis 3 sauber getrennte Hebel aus unterschiedlichen Kategorien mit präziser Stückzahl- und Kostenangabe aus `grundfakten.yaml`, z.B. 1 Kassenstelle = 1,45 Mio. EUR, 1 PVE = 3,6 Mio. EUR, 1 Facharztzentrum = 5,2 Mio. EUR, sowie Flächentarif-/Randzeiten-/Digital-Hebel) über die Python-Calculator-Tools.
+   WICHTIG ZU STÜCKZAHLEN & QUELLEN:
+   - Nutze bei Stückzahlen reale Zahlen aus `grundfakten.yaml` (z.B. ~340 unbesetzte Kassenstellen, Ausbau von 75 auf 120 PVE, regionale Facharztzentren) oder den konkreten Zahlen in deinen Artikeln. Erfinde keine Phantasie-Stückzahlen!
+   - Ordne in `source_article_ids` einer Maßnahme NUR DANN eine [ART-...] ID zu, wenn dieser Artikel das Thema der Maßnahme auch wirklich im Text behandelt (z.B. PVE-Artikel für PVE, Kassenstellen-Artikel für Kassenstellen)!
 2. Schöpfe den Budgetrahmen nahe an der Obergrenze von {max_budget_pct * 578.37:.0f} Mio. EUR ({max_budget_pct}%) aus, ohne diese zu überschreiten!
 3. Formuliere 3 extrem prägnante Bullet-Points (`core_bullets`, jeweils max. 14 Wörter!) für die Schnellübersicht sowie ein kompaktes `position_statement` (max. 75 Wörter, mit `[ART-...]` Zitaten).
 
@@ -951,6 +1019,9 @@ DEINE AUFGABEN FÜR VERHANDLUNGSRUNDE {round_num} (EIGENES PROPOSAL EINBRINGEN �
 1. Zerlege in `token_article_critique` (max. 55 Wörter!) die mit deinen DB-Tokens geprüften Artikel ({', '.join(t['article_id'] for t in token_articles)}): Was hat der Gegenspieler ausgelassen?
 2. Antworte in `rebuttal_to_others` (max. 65 Wörter!) direkt auf die anderen anwesenden Verhandlungspartner.
 3. Formuliere 3 extrem knappe `core_bullets` (jeweils max. 14 Wörter!) für die Schnellübersicht, dein aktualisiertes `position_statement` (max. 70 Wörter) und dein eigenes `proposal` für Runde {round_num} (kombiniere 2 bis 3 Maßnahmen aus verschiedenen Hebel-Kategorien und schöpfe ca. 75% bis 98% des erlaubten Budgetrahmens von {max_budget_pct * 578.37:.0f} Mio. EUR aus, damit das Ziel von {target_goal_pct}% erreicht wird!).
+   WICHTIG ZU STÜCKZAHLEN & QUELLEN:
+   - Nutze bei Stückzahlen reale Zahlen aus `grundfakten.yaml` (z.B. ~340 unbesetzte Kassenstellen, Ausbau von 75 auf 120 PVE, regionale Facharztzentren) oder den konkreten Zahlen in deinen Artikeln.
+   - Ordne in `source_article_ids` einer Maßnahme NUR DANN eine [ART-...] ID zu, wenn dieser Artikel das Thema der Maßnahme auch wirklich im Text behandelt!
 
 Antworte AUSSCHLIESSLICH als valides JSON-Objekt:
 {{
@@ -1145,6 +1216,8 @@ AKTUELLE POSITIONEN & EIGENE PROPOSALS DER INSTITUTIONEN (Verhandlungsrunde {rou
 
 Erstelle jetzt das gemeinsame Kompromiss-Paket (Main-Proposal) für Verhandlungsrunde {round_num}, über das alle Agenten im nächsten Schritt abstimmen werden:
 - Kombiniere 4 bis 5 komplementäre Maßnahmen aus unterschiedlichen Hebel-Kategorien, sodass der **kombinierte Gesamteffekt ca. {target_goal_pct:.0f}%** erreicht und das Gesamtbudget **möglichst nahe an der erlaubten Obergrenze liegt ({max_budget_mio * 0.85:.0f} bis {max_budget_mio * 0.99:.0f} Mio. EUR = {max_budget_pct * 0.85:.2f}% – {max_budget_pct * 0.99:.2f}% von max. {max_budget_pct:.2f}%)**!
+- Nutze bei Stückzahlen reale Bestands- und Zielzahlen aus `grundfakten.yaml` (z.B. ~340 unbesetzte Kassenstellen, Ausbau auf 120 PVE, regionale Facharztzentren) oder den Vorschlägen der Agenten.
+- Ordne in `source_article_ids` einer Maßnahme NUR DANN eine [ART-...] ID zu, wenn dieser Artikel das Thema der Maßnahme auch wirklich im Text behandelt!
 - Halte alle Texte knapp und präzise.
 
 Antworte AUSSCHLIESSLICH mit validem JSON:
@@ -1212,18 +1285,10 @@ Antworte AUSSCHLIESSLICH mit validem JSON:
     if cur_eff > 0 and cur_eff < target_goal_pct * 0.92 and cur_pct > 0 and cur_pct < max_budget_pct * 0.88:
         desired_eff_scale = (target_goal_pct * 1.02) / cur_eff
         max_safe_budget_scale = (max_budget_pct * 0.96) / cur_pct
-        boost_factor = min(desired_eff_scale, max_safe_budget_scale, 2.8)
+        boost_factor = min(desired_eff_scale, max_safe_budget_scale, 2.5)
         if boost_factor > 1.08:
             for m in verified_prop.get("measures", []):
                 m["cost_mio_eur"] = round(float(m.get("cost_mio_eur", 0.0)) * boost_factor, 1)
-                # Also scale unit numbers in the title if present so stock-anchored math scales consistently
-                def _scale_unit_match(match: re.Match) -> str:
-                    val = int(match.group(1))
-                    if val == 1450 or 2020 <= val <= 2045:
-                        return match.group(0)
-                    return str(int(round(val * boost_factor)))
-
-                m["title"] = re.sub(r"\b(\d{2,4})\b", _scale_unit_match, m.get("title", ""), count=1)
                 orig_e = float(m.get("original_claimed_effect_pct", m.get("expected_effect_pct", 0.0)))
                 m["original_claimed_effect_pct"] = round(orig_e * boost_factor, 2)
                 m["expected_effect_pct"] = round(float(m.get("expected_effect_pct", 0.0)) * boost_factor, 2)
@@ -1240,6 +1305,42 @@ Antworte AUSSCHLIESSLICH mit validem JSON:
                 unit="% Effekt",
                 source_reference="grundfakten.yaml",
             )
+
+    # Collect all available article records from participating agents
+    all_cited_ids = set()
+    for st in agent_states:
+        for aid in st.get("cited_article_ids", []):
+            if isinstance(aid, str) and aid.startswith("ART-"):
+                all_cited_ids.add(aid)
+        for m in (st.get("proposal") or {}).get("measures", []):
+            for aid in m.get("source_article_ids", []):
+                if isinstance(aid, str) and aid.startswith("ART-"):
+                    all_cited_ids.add(aid)
+    for m in verified_prop.get("measures", []):
+        for aid in m.get("source_article_ids", []):
+            if isinstance(aid, str) and aid.startswith("ART-"):
+                all_cited_ids.add(aid)
+
+    if all_cited_ids:
+        all_arts_map = get_articles_by_ids(list(all_cited_ids))
+        filter_thematic_sources_for_measures(verified_prop.get("measures", []), all_arts_map)
+
+    # Clean cited_article_ids for the main proposal so only valid thematic articles remain
+    used_prop_sources = set()
+    for m in verified_prop.get("measures", []):
+        for aid in m.get("source_article_ids", []):
+            if isinstance(aid, str) and aid.startswith("ART-"):
+                used_prop_sources.add(aid)
+    if not used_prop_sources:
+        for st in agent_states:
+            for aid in st.get("cited_article_ids", []):
+                if isinstance(aid, str) and aid.startswith("ART-"):
+                    used_prop_sources.add(aid)
+                    if len(used_prop_sources) >= 2:
+                        break
+            if len(used_prop_sources) >= 2:
+                break
+    verified_prop["cited_article_ids"] = list(used_prop_sources)
 
     verified_prop["round_num"] = round_num
     verified_prop["calculator_steps"] = [s.to_dict() for s in calc.steps]
@@ -1586,11 +1687,21 @@ def run_policy_simulation(
                 user_input,
                 intent_info,
                 initial_retrieved_map[role.role_id],
-            ): role.role_id
+            ): role
             for role in active_roles
         }
+        done_cnt = 0
         for fut in as_completed(fut_map):
-            opening_states.append(fut.result())
+            st = fut.result()
+            opening_states.append(st)
+            done_cnt += 1
+            cur_role = fut_map[fut]
+            role_label = getattr(cur_role, "short_name", getattr(cur_role, "name", st.get("role_name", "Agent")))
+            prog_val = round(0.30 + (0.10 * (done_cnt / len(active_roles))), 3)
+            _notify(
+                f"Schritt 3/{total_steps}: Eröffnungsrunde ({done_cnt}/{len(active_roles)} fertig: {role_label})...",
+                prog_val,
+            )
 
     order_idx = {rid: i for i, rid in enumerate(selected_role_ids)}
     opening_states.sort(key=lambda s: order_idx.get(s["role_id"], 99))
@@ -1659,11 +1770,21 @@ def run_policy_simulation(
                     tokens_per_round,
                     claimed_rn,
                     claim_lock_rn,
-                ): role.role_id
+                ): role
                 for role in active_roles
             }
+            done_cnt_r = 0
             for fut in as_completed(fut_map):
-                round_states.append(fut.result())
+                rst = fut.result()
+                round_states.append(rst)
+                done_cnt_r += 1
+                cur_role_r = fut_map[fut]
+                role_label_r = getattr(cur_role_r, "short_name", getattr(cur_role_r, "name", rst.get("role_name", "Agent")))
+                prog_val_r = round(prog_base + (0.10 * (done_cnt_r / len(active_roles))), 3)
+                _notify(
+                    f"Schritt {step_a}/{total_steps}: Runde {round_num} ({done_cnt_r}/{len(active_roles)} fertig: {role_label_r})...",
+                    prog_val_r,
+                )
 
         round_states.sort(key=lambda s: order_idx.get(s["role_id"], 99))
 

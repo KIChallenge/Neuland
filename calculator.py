@@ -81,63 +81,64 @@ BUDGET_BASELINES_2024_MIO: Dict[str, float] = {
 }
 
 # Real Austrian System Stock / Capacity Anchors (from grundfakten.yaml)
-# Used to prevent LLMs from inventing fantasy effect sizes!
+# Used to calibrate realistic, budget-grounded effect sizes for Austrian healthcare levers!
 SYSTEM_LEVER_ANCHORS: Dict[str, Dict[str, Any]] = {
     "kassenstellen": {
         "name": "Kassenstellen & Vertragsärzt:innen (inkl. Tarifattraktivierung)",
         "base_stock": 8300.0,
-        "min_unit_cost_mio": 1.25,
+        "min_unit_cost_mio": 1.45,
         "default_unit_cost_mio": 1.45,
-        "elasticity": 1.35,  # +1% more Kassenstellen -> ~1.35% waiting time reduction in bottleneck specialties
-        "max_single_lever_effect_pct": 8.5,
+        "budget_multiplier": 3.4,  # 1% Gesamtbudget (~578 Mio. €) -> ~3.4% System-Effekt
+        "max_single_lever_effect_pct": 5.0,
     },
     "pve_primärversorgung": {
         "name": "Primärversorgungseinheiten (PVE) & Randzeiten-Zentren",
-        "base_stock": 850.0,  # Equivalent primary care capacity units
-        "min_unit_cost_mio": 2.8,
+        "base_stock": 75.0,  # Realer Bestand laut grundfakten.yaml (Ziel 2025: 120)
+        "target_stock_2025": 120.0,
+        "min_unit_cost_mio": 3.6,
         "default_unit_cost_mio": 3.6,
-        "elasticity": 1.20,
-        "max_single_lever_effect_pct": 7.5,
+        "budget_multiplier": 3.2,  # 1% Gesamtbudget -> ~3.2% System-Effekt
+        "max_single_lever_effect_pct": 4.0,
     },
     "facharztzentren_ambulanz": {
         "name": "Regionale Facharztzentren & Spitalsambulanz-Entlastung",
         "base_stock": 600.0,
-        "min_unit_cost_mio": 4.2,
+        "min_unit_cost_mio": 5.2,
         "default_unit_cost_mio": 5.2,
-        "elasticity": 1.15,
-        "max_single_lever_effect_pct": 8.0,
+        "budget_multiplier": 3.5,  # 1% Gesamtbudget -> ~3.5% System-Effekt
+        "max_single_lever_effect_pct": 5.5,
     },
     "spitalsbetten_tagesklinik": {
         "name": "Spitalskapazitäten, OP-Ausbau & Tagesklinik-Verlagerung",
         "base_stock": 43332.0,
-        "min_unit_cost_mio": 0.12,
+        "min_unit_cost_mio": 0.15,
         "default_unit_cost_mio": 0.18,
-        "elasticity": 1.25,
-        "max_single_lever_effect_pct": 8.5,
+        "budget_multiplier": 2.8,  # 1% Gesamtbudget -> ~2.8% System-Effekt
+        "max_single_lever_effect_pct": 4.5,
     },
     "pflegepersonal_dgkp": {
         "name": "Pflegepersonal (DGKP / Community Nurses / OP-Pflege)",
         "base_stock": 62254.0,
         "min_unit_cost_mio": 0.085,
         "default_unit_cost_mio": 0.095,
-        "elasticity": 1.30,
-        "max_single_lever_effect_pct": 8.0,
+        "budget_multiplier": 3.0,  # 1% Gesamtbudget -> ~3.0% System-Effekt
+        "max_single_lever_effect_pct": 4.0,
     },
     "digitalisierung_1450_elga": {
         "name": "Digitale Patientenlenkung (1450, ELGA, e-Health-Triage)",
-        "base_stock": 1200.0,  # Mio EUR reference transformation volume
+        "base_stock": 1200.0,
         "min_unit_cost_mio": 1.0,
         "default_unit_cost_mio": 1.0,
-        "elasticity": 0.25,  # Per 100 Mio EUR -> ~3.0-4.5% steering effect
-        "max_single_lever_effect_pct": 5.5,
+        "budget_multiplier": 3.0,  # Hohe Effizienz, aber Deckelung bei 2.5%
+        "max_single_lever_effect_pct": 2.5,
     },
     "praevention_reha": {
         "name": "Prävention, Vorsorge & Rehabilitation",
-        "base_stock": 1232.0,  # Current prevention budget Mio EUR
+        "base_stock": 1232.0,
         "min_unit_cost_mio": 1.0,
         "default_unit_cost_mio": 1.0,
-        "elasticity": 0.18,
-        "max_single_lever_effect_pct": 6.5,
+        "budget_multiplier": 2.8,
+        "max_single_lever_effect_pct": 3.5,
     },
 }
 
@@ -187,66 +188,42 @@ def compute_grounded_measure_effect(
 ) -> Dict[str, Any]:
     """
     Computes the realistic effect of a measure anchored to the actual Austrian system stock
-    in `grundfakten.yaml`.
-    Combines:
-    1. Direct unit expansion effect (`num_units / base_stock * elasticity`)
-    2. System-wide productivity / extended-hours / tariff reform effect if the allocated budget
-       exceeds pure unit setup costs (e.g., funding evening/weekend slots across the existing 8,300 doctors).
-    Returns transparent before/after explanation for the UI Fact-Check Diff!
+    and budget baselines in `grundfakten.yaml`.
+    
+    Calibration logic:
+    - In Austria (57,837 Mio. EUR total budget), 1% budget (~578 Mio. EUR) targeted in primary care,
+      bottleneck specialist access or digital triage realistically yields ~2.8% to 3.5% system effect.
+    - Each lever has a calibrated budget multiplier and max cap so no tiny budget can generate fantasy gains!
+    - Returns a transparent, honest explanation for the UI Fact-Check Diff.
     """
     anchor = SYSTEM_LEVER_ANCHORS.get(lever_category, SYSTEM_LEVER_ANCHORS["facharztzentren_ambulanz"])
     base_total_budget = BUDGET_BASELINES_2024_MIO["gesamt_laufend"]  # 57837.0
     max_cap = float(anchor["max_single_lever_effect_pct"])
-    stock = float(anchor["base_stock"])
-    unit_cost = float(anchor["default_unit_cost_mio"])
+    budget_multiplier = float(anchor.get("budget_multiplier", 3.2))
 
     budget_share_pct = (max(0.0, cost_mio_eur) / base_total_budget) * 100.0
-    # In Austria (57,837 Mio EUR total budget), 1% of total budget (~578 Mio EUR) invested in targeted
-    # outpatient/hospital capacity & extended opening hours yields ~5.5% to 6.8% waiting-time/capacity effect.
-    cost_based_effect = budget_share_pct * 6.4
+    realistic_effect = budget_share_pct * budget_multiplier
+    realistic_effect = min(max_cap, max(0.2, realistic_effect))
 
-    reason_detail = ""
-    if (
-        num_units
-        and num_units > 0
-        and lever_category
-        in (
-            "kassenstellen",
-            "pve_primärversorgung",
-            "facharztzentren_ambulanz",
-            "spitalsbetten_tagesklinik",
-            "pflegepersonal_dgkp",
-        )
+    if num_units and num_units > 0 and lever_category in (
+        "kassenstellen",
+        "pve_primärversorgung",
+        "facharztzentren_ambulanz",
+        "spitalsbetten_tagesklinik",
+        "pflegepersonal_dgkp",
     ):
-        rel_stock_increase_pct = (num_units / stock) * 100.0
-        unit_expansion_effect = rel_stock_increase_pct * float(anchor["elasticity"])
-        pure_unit_cost_mio = num_units * unit_cost
-        # If the measure also funds system-wide tariff/opening-hour incentives beyond pure unit creation:
-        extra_structural_budget_mio = max(0.0, cost_mio_eur - pure_unit_cost_mio)
-        extra_structural_effect = (extra_structural_budget_mio / base_total_budget) * 100.0 * 5.2
-        realistic_effect = unit_expansion_effect + extra_structural_effect
-        reason_detail = (
-            f"{num_units:.0f} Einh. / {stock:.0f} Bestand (+{rel_stock_increase_pct:.2f}% Kapazität -> +{unit_expansion_effect:.2f}%)"
-            + (
-                f" + Flächen-/Randzeiten-Hebel aus {extra_structural_budget_mio:.0f} Mio. € (+{extra_structural_effect:.2f}%)"
-                if extra_structural_effect >= 0.25
-                else ""
-            )
-        )
+        reason_detail = f"{num_units:.0f} Einheiten | Budget-Einsatz: {cost_mio_eur:.0f} Mio. € ({budget_share_pct:.2f}% des Gesamtbudgets)"
     else:
-        realistic_effect = cost_based_effect
-        reason_detail = f"Budget-Hebel {cost_mio_eur:.0f} Mio. € ({budget_share_pct:.2f}% des Gesamtbudgets im Bereich {anchor['name']})"
+        reason_detail = f"Budget-Einsatz: {cost_mio_eur:.0f} Mio. € ({budget_share_pct:.2f}% des Gesamtbudgets)"
 
-    realistic_effect = min(max_cap, max(0.3, realistic_effect))
-
-    # Keep the agent's claimed effect if it lies within the realistic corridor [0.5x .. 1.18x of realistic_effect];
+    # Allow claimed effect if it lies within the realistic corridor [0.70x .. 1.15x of realistic_effect];
     # otherwise adjust to realistic_effect and log the exact before/after diff!
-    if 0.3 <= abs(raw_claimed_effect_pct) <= realistic_effect * 1.18 and abs(raw_claimed_effect_pct) >= realistic_effect * 0.55:
+    if 0.2 <= abs(raw_claimed_effect_pct) <= realistic_effect * 1.15 and abs(raw_claimed_effect_pct) >= realistic_effect * 0.70:
         final_effect = round(abs(raw_claimed_effect_pct), 2)
         was_clamped = False
     else:
         final_effect = round(realistic_effect, 2)
-        was_clamped = abs(raw_claimed_effect_pct - final_effect) > 0.45
+        was_clamped = abs(raw_claimed_effect_pct - final_effect) > 0.35
 
     return {
         "final_effect_pct": final_effect,
@@ -689,6 +666,17 @@ def validate_and_normalize_proposal_budget(
 
         lever_cat = infer_lever_category(title, desc)
         num_units = _extract_unit_count_from_title(title)
+        anchor = SYSTEM_LEVER_ANCHORS.get(lever_cat, SYSTEM_LEVER_ANCHORS["facharztzentren_ambulanz"])
+
+        # Enforce realistic minimum unit costs if explicit units are claimed
+        min_unit_cost = float(anchor.get("min_unit_cost_mio", 0.0))
+        cost_adjusted_note = ""
+        if num_units and num_units > 0 and min_unit_cost > 0.0:
+            expected_min_cost = round(num_units * min_unit_cost, 2)
+            if cost_mio < expected_min_cost * 0.85:
+                old_cost = cost_mio
+                cost_mio = expected_min_cost
+                cost_adjusted_note = f" | Kosten auf Mindestwert {cost_mio:.0f} Mio. € angepasst"
 
         grounded = compute_grounded_measure_effect(
             cost_mio_eur=cost_mio,
@@ -700,23 +688,23 @@ def validate_and_normalize_proposal_budget(
 
         # Prevent extreme double-counting within the exact same lever category,
         # while NEVER zeroing out a measure that has real budget attached!
-        anchor_max = float(SYSTEM_LEVER_ANCHORS[lever_cat]["max_single_lever_effect_pct"]) * 1.65
+        anchor_max = float(anchor["max_single_lever_effect_pct"]) * 1.35
         already_in_cat = category_effects_sum.get(lever_cat, 0.0)
         if already_in_cat > 0 and already_in_cat + eff > anchor_max:
             remaining_room = max(0.0, anchor_max - already_in_cat)
-            # Keep a realistic diminishing-returns floor (at least 45% of its standalone grounded effect)
-            eff = round(max(remaining_room, min(eff * 0.55, 4.2)), 2)
+            # Keep a realistic diminishing-returns floor (at least 35% of its standalone grounded effect)
+            eff = round(max(remaining_room, min(eff * 0.35, 2.5)), 2)
             grounded["was_clamped"] = True
         category_effects_sum[lever_cat] = already_in_cat + eff
 
         display_raw = raw_eff if raw_eff > 0.0 else eff
-        if grounded["was_clamped"] and abs(display_raw - eff) > 0.35:
+        if (grounded["was_clamped"] and abs(display_raw - eff) > 0.35) or cost_adjusted_note:
             clamped_notes.append(
-                f"Maßnahme „{title}“: Wirkung von behaupteten +{display_raw:.1f}% auf +{eff:.2f}% korrigiert ({grounded['reason_detail']})."
+                f"Maßnahme „{title}“: Wirkung von behaupteten +{display_raw:.1f}% auf +{eff:.2f}% korrigiert ({grounded['reason_detail']}{cost_adjusted_note})."
             )
-            m["fact_check_diff"] = f"Korrigiert von +{display_raw:.1f}% auf +{eff:.2f}% ({grounded['reason_detail']})"
+            m["fact_check_diff"] = f"Korrigiert von +{display_raw:.1f}% auf +{eff:.2f}% ({grounded['reason_detail']}{cost_adjusted_note})"
         else:
-            m["fact_check_diff"] = f"Bestätigt (+{eff:.2f}% | {grounded['reason_detail']})"
+            m["fact_check_diff"] = f"Bestätigt (+{eff:.2f}% | {grounded['reason_detail']}{cost_adjusted_note})"
 
         # Clean source_article_ids so 'grundfakten.yaml' is not mixed with ART- IDs
         raw_sources = m.get("source_article_ids", [])

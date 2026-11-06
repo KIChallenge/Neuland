@@ -1459,6 +1459,16 @@
         const diffNote = m.fact_check_diff
           ? `<div style="font-size:0.74rem; color:var(--text-muted); margin-top:0.22rem;">↳ <em>Faktencheck:</em> ${m.fact_check_diff}</div>`
           : '';
+        const seenBadges = new Set();
+        const badgesHtml = (m.source_article_ids || [])
+          .map(id => {
+            const b = renderNewsBadge(id, ctxHint);
+            if (!b || seenBadges.has(b)) return '';
+            seenBadges.add(b);
+            return b;
+          })
+          .filter(Boolean)
+          .join(' ');
         return `
           <tr>
             <td>
@@ -1471,7 +1481,7 @@
               <div style="color:var(--text-muted); font-size:0.75rem; font-weight:400;">${m.budget_impact_pct}% Budget</div>
             </td>
             <td style="white-space:nowrap; font-weight:700; color:var(--green);">+${m.expected_effect_pct}%</td>
-            <td>${(m.source_article_ids || []).map(id => renderNewsBadge(id, ctxHint)).join(' ')}</td>
+            <td>${badgesHtml}</td>
           </tr>
         `;
       }).join('');
@@ -1720,7 +1730,13 @@
         const found = mpText.match(/ART-\d{8}-\d{3}(?:-\d+)?/g);
         if (found) found.forEach(id => mpSources.add(id));
 
-        const mpSourcesBadges = Array.from(mpSources).map(id => renderNewsBadge(id, mpText)).join(' ');
+        const seenMpBadges = new Set();
+        const mpSourcesBadges = Array.from(mpSources).map(id => {
+          const b = renderNewsBadge(id, mpText);
+          if (!b || seenMpBadges.has(b)) return '';
+          seenMpBadges.add(b);
+          return b;
+        }).filter(Boolean).join(' ');
         const mpSourcesDropdown = mpSources.size > 0 ? `
           <div style="margin-top:0.75rem; padding-top:0.65rem; border-top:1px solid var(--border);">
             <details class="drilldown">
